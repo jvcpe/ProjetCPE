@@ -1,0 +1,170 @@
+C51 COMPILER V9.52.0.0   FOM4                                                              04/25/2017 17:29:58 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE FOM4
+OBJECT MODULE PLACED IN FOM4.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Detection obstacle\FOM4.c LARGE BROWSE DEBUG OBJECTEXTEND PRINT(.\FOM4.lst)
+                    - TABS(2) OBJECT(FOM4.obj)
+
+line level    source
+
+   1          
+   2          //------------------------------------------------------------------------------------
+   3          // Includes
+   4          //------------------------------------------------------------------------------------
+   5          #include <c8051f020.h>
+   6          #include "FOM4.h"
+   7          #include "intrins.h"
+   8          
+   9          sbit P3__4 = P3^4;
+  10          sbit P3__6 = P3^6;  
+  11          
+  12          
+  13          //------------------------------------------------------------------------------------
+  14          // Variables globales
+  15          //------------------------------------------------------------------------------------
+  16          static unsigned int temps=0;  //valeur du temps de l'echo pulse
+  17          static unsigned int interruption=0; //passe a 1 pendant la duree de l'interruption
+  18          static unsigned int front=0; //quand front=0, INT6 se declenche sur front montant, quand front=1, sur fron
+             -t descendant
+  19          unsigned int Mesure=0; //quand mesure=1, la mesure est en cours, sinon il n'y a pas de mesure
+  20          
+  21          //------------------------------------------------------------------------------------
+  22          //Initilisation generale du sous-module
+  23          //------------------------------------------------------------------------------------
+  24          void FO_M4_init()
+  25          {
+  26   1          config_P3_FO_M4();
+  27   1          Timer2_Init_FO_M4();
+  28   1          Interrupt67_Init_FO_M4();
+  29   1      }
+  30          
+  31          //------------------------------------------------------------------------------------
+  32          //Configuration des ports P3.4, P3.5, P3.6 et P3.7
+  33          //------------------------------------------------------------------------------------
+  34          void config_P3_FO_M4()
+  35          {    
+  36   1        // P3.4  -  Unassigned,  Push-Pull,  Digital, telemetre Trigger
+  37   1        // P3.6  -  Unassigned,  Open-Drain, Digital, telemetre echo
+  38   1      
+  39   1          P3MDOUT   = 0x10;
+  40   1          XBR2      = 0x40;
+  41   1        
+  42   1      }
+  43          //------------------------------------------------------------------------------------
+  44          //Configuration du Timer 2
+  45          //------------------------------------------------------------------------------------
+  46          /* Le Timer utilise le systeme de clock divise par 12, de telle sorte qu'il n'atteigne
+  47           * jamais sa valeur de reload avant la fin du signal d'Echo Pulse. En effet, le timer 
+  48           * se remet a zero au maximum au bout de 35.8ms, pour nous, le temps maximum que nous 
+  49           * mesurons est de 25ms.
+  50          */
+  51          void Timer2_Init_FO_M4()
+  52          {
+  53   1        TL2       = 0x00; //pour un premier cycle
+C51 COMPILER V9.52.0.0   FOM4                                                              04/25/2017 17:29:58 PAGE 2   
+
+  54   1        TH2       = 0x00; //de bonne duree
+  55   1      }
+  56          //------------------------------------------------------------------------------------
+  57          //Configuration de l'interruptions 6
+  58          //------------------------------------------------------------------------------------
+  59          // Configure l'interruption 6 sur front montant de P3.6 et l'autorise.
+  60          void Interrupt67_Init_FO_M4()
+  61          {
+  62   1          P3IF     |= 0x04; //l'interruption 6 se declenche sur front montant de P3.6
+  63   1        EIP2      = 0x10;
+  64   1        P3IF &= 0xBF;
+  65   1        EIE2      |= 0x10; //enable external interrupt 6
+  66   1      }
+  67          //------------------------------------------------------------------------------------
+  68          //Routine de l'interruption 6
+  69          //------------------------------------------------------------------------------------
+  70          /* Lorsque l'interruption se declenche sur front montant, elle se reconfigure pour se 
+  71           * declencher sur front descendant et demarre le timer2. Lorsqu'elle se declenche sur
+  72           * front descendant, elle se reconfigure sur front montant, recupere la valeur du timer,
+  73           * l'arrete et le remet a zero.
+  74          */
+  75          void ISR__EXT_INT6_FO_M4() interrupt 18
+  76          {
+  77   1        if(front==0 && interruption==0)
+  78   1        {
+  79   2          interruption=1;
+  80   2          TR2=1; //demarrage du timer2
+  81   2          P3IF &= 0xFB; //l'interruption de declenche maintenant sur front descendant
+  82   2          front=1;
+  83   2        }
+  84   1        
+  85   1        if(front==1 && interruption==0)
+  86   1        {
+  87   2          interruption=1;
+  88   2          TR2=0; //arret du timer
+  89   2          
+  90   2          temps=0xFF*TH2+TL2;
+  91   2          TH2=0x00; //remise a 0 des valeurs 
+  92   2          TL2=0x00; //du timer
+  93   2          
+  94   2          P3IF |= 0x04; //l'interruption se declenche sur front montant
+  95   2          front=0;
+  96   2        }
+  97   1        interruption=0;
+  98   1        P3IF &= 0xBF;
+  99   1      }
+ 100          
+ 101          //------------------------------------------------------------------------------------
+ 102          //Fonction qui se charge de la mesure avec le telemetre a l'avant
+ 103          //------------------------------------------------------------------------------------
+ 104          /*
+ 105          */
+ 106          
+ 107          unsigned int MES_Dist(void)
+ 108          {
+ 109   1        switch (Mesure){
+ 110   2        case 0:
+ 111   2          Pulse_P34();
+ 112   2          Mesure=1;
+ 113   2          return 60;
+ 114   2      
+ 115   2        case 1:
+C51 COMPILER V9.52.0.0   FOM4                                                              04/25/2017 17:29:58 PAGE 3   
+
+ 116   2          Mesure=0;
+ 117   2          return temps*0.542f*(0.000001)*34000.0f/2.0f; //retourne la distance en centimetre
+ 118   2          
+ 119   2        default:
+ 120   2          return 0;
+ 121   2        }       
+ 122   1          
+ 123   1      }
+ 124          
+ 125          //------------------------------------------------------------------------------------
+ 126          //Fonction qui declenche la mesure avec le telemetre
+ 127          //------------------------------------------------------------------------------------
+ 128          /* Envoie une pulsation de 10us sur la sortie P3.4 pour declencher une mesure de
+ 129           * distance du telemtre avant.
+ 130          */
+ 131          void Pulse_P34()
+ 132          {
+ 133   1        int i=0;
+ 134   1        P3__4=1;
+ 135   1        
+ 136   1        for(i=0;i<250;i++)
+ 137   1          _nop_();
+ 138   1        
+ 139   1        P3__4=0;
+ 140   1      }
+ 141          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    295    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      8    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

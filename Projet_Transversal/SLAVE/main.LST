@@ -1,0 +1,90 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              05/18/2017 17:23:30 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "c8051F020.h"
+   2          #include "CFG_SPI_Slave.h"
+   3          #include "CMD_Servomoteur.h"
+   4          #include "SPI_Slave.h"
+   5          #include "CFG_UART0.h"
+   6          #include "Putchar_Getchar.h"
+   7          #include "CFG_Timer1.h"
+   8          #include "CFG_PCA0.h"
+   9          #include "CFG_Timer2.h"
+  10          #include "Lumiere.h"
+  11          
+  12          
+  13          void Reset_Init(void) //Initialisation des resets
+  14          {
+  15   1        EA = 0; //Désactivation des interruptions
+  16   1        WDTCN = 0xDE; //Désactivation du Watchdog;
+  17   1        WDTCN = 0xAD;
+  18   1        EA = 1; //On remet les interruptions;
+  19   1      }
+  20          
+  21          void CFG_Sysclk(void) //Initialisation de l'horloge du systeme
+  22          {
+  23   1        int i;
+  24   1        OSCXCN = 0x67; //On a des quartz de fréquence f>6.7Mhz
+  25   1        for(i=0; i<3000; i++); //Attente d'une 1ms minimum
+  26   1        while((OSCXCN & 0x80)==0); //Attente de la stabilisation du quartz
+  27   1        OSCICN = 0x08; //On réoriente l'horloge interne vers l'horloge exterxne.
+  28   1      }
+  29          
+  30          void Port_IO_Init(void)  // Initialisation des ports d'entrée sortie
+  31          { 
+  32   1          P1MDOUT   = 0x07;
+  33   1          XBR0      = 0x1E;
+  34   1         
+  35   1          XBR1      = 0xAA;
+  36   1          XBR2      = 0x4C;
+  37   1      
+  38   1      }
+  39          
+  40          void Init_Device (void) //Initialisation du microcontroleur
+  41          {
+  42   1          Reset_Init();       // Appel des différentes fonctions pour l'initialisation du microcontroleur
+  43   1          CFG_Sysclk();
+  44   1          Port_IO_Init();
+  45   1          Config_Timer1();
+  46   1          Config_PCA0();
+  47   1          Config_UART0();
+  48   1          config_spi();
+  49   1          initialise_buffer();
+  50   1          Config_Timer2();
+  51   1        
+  52   1      }
+  53          
+  54          
+  55          
+C51 COMPILER V9.52.0.0   MAIN                                                              05/18/2017 17:23:30 PAGE 2   
+
+  56          void main(void)
+  57          {
+  58   1          Init_Device();
+  59   1          
+  60   1          while(1)
+  61   1          {
+  62   2              
+  63   2          }
+  64   1              
+  65   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     82    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

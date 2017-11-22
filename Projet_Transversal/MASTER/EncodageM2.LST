@@ -1,0 +1,338 @@
+C51 COMPILER V9.52.0.0   ENCODAGEM2                                                        05/18/2017 17:39:00 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE ENCODAGEM2
+OBJECT MODULE PLACED IN EncodageM2.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE EncodageM2.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          //------------------------------------------------------------------------------------
+   2          // EncodageM2.c
+   3          //------------------------------------------------------------------------------------
+   4          //
+   5          // Target: C8051F02x
+   6          //
+   7          // Tool chain: KEIL PK51
+   8          //
+   9          //OBJECTIF: Encodage des commandes à envoyer vers la serializer
+  10          //------------------------------------------------------------------------------------
+  11          // Includes
+  12          //------------------------------------------------------------------------------------
+  13          #include <c8051f020.h>
+  14          #include "EncodageM2.h" 
+  15          #include <stdio.h>
+  16          #include "Declarations_GPIO_BSE.h"
+  17          #include <intrins.h>
+  18          #include <string.h>
+  19          #include "Putchar_Getchar.h"
+  20          
+  21          enum Commande derniereCommande;         
+  22          
+  23          char* encode(struct COMMANDES_SERIALIZER c)
+  24          {
+  25   1        char reponse[40];
+  26   1        
+  27   1        switch (c.Etat_Commande) 
+  28   1        {
+  29   2          case Reset:
+  30   2            strcpy(reponse, "reset\r");
+  31   2            break;
+  32   2          
+  33   2          case Getenc_1:
+  34   2            strcpy(reponse, "getenc 1\r");
+  35   2            break;
+  36   2          case Getenc_2:
+  37   2            strcpy(reponse, "getenc 2\r");
+  38   2            break;
+  39   2          case Getenc_1_2:
+  40   2            strcpy(reponse, "getenc 1 2\r");
+  41   2            break;
+  42   2            
+  43   2          case Clrenc_1:
+  44   2            strcpy(reponse, "clrenc 1\r");
+  45   2            break;
+  46   2          case Clrenc_2:
+  47   2            strcpy(reponse, "clrenc 2\r");
+  48   2            break;
+  49   2          case Clrenc_1_2:
+  50   2            strcpy(reponse, "clrenc 1 2\r");
+  51   2            break;
+  52   2            
+  53   2          case mogo_1:
+  54   2            sprintf(reponse, "mogo 1:%d\r",(int) c.Vitesse_Mot1);
+  55   2            break;
+C51 COMPILER V9.52.0.0   ENCODAGEM2                                                        05/18/2017 17:39:00 PAGE 2   
+
+  56   2          case mogo_2:
+  57   2            sprintf(reponse, "mogo 2:%d\r",(int) c.Vitesse_Mot1);
+  58   2            break;
+  59   2          case mogo_1_2:
+  60   2            sprintf(reponse, "mogo 1:%d 2:%d \r\0", (int)c.Vitesse_Mot1,(int) c.Vitesse_Mot2);
+  61   2            break;
+  62   2            
+  63   2          case Vpid_set:
+  64   2            sprintf(reponse, "vpid %d:%d:%d:%d\r", (int)c.Set_P,(int)c.Set_I, (int)c.Set_D, (int)c.Set_L_A);
+  65   2            break;
+  66   2          
+  67   2          case Vpid_read:
+  68   2            strcpy(reponse, "vpid\r");
+  69   2            break;
+  70   2            
+  71   2          case digo_1:
+  72   2            sprintf(reponse, "digo 1:%d:%d\r", (int)c.Ticks_mot1,(int) c.Vitesse_Mot1);
+  73   2            break;
+  74   2          case digo_2:
+  75   2            sprintf(reponse, "digo 2:%d:%d\r", (int)c.Ticks_mot2,(int) c.Vitesse_Mot2);
+  76   2            break;
+  77   2          case digo_1_2:
+  78   2            sprintf(reponse, "digo 1:%d:%d 2:%d:%d\r",(int)c.Ticks_mot1, (int)c.Vitesse_Mot1,(int) c.Ticks_mot2,(in
+             -t) c.Vitesse_Mot2);
+  79   2            break;
+  80   2            
+  81   2          case Dpid_set:
+  82   2            sprintf(reponse, "dpid %d:%d:%d:%d\r",(int) c.Set_P,(int) c.Set_I,(int) c.Set_D,(int) c.Set_L_A);
+  83   2            break;
+  84   2          
+  85   2          case Dpid_read:
+  86   2            strcpy(reponse, "dpid\r");
+  87   2            break;
+  88   2            
+  89   2          case Rpid_Stinger:
+  90   2            strcpy(reponse, "rpid s\r");
+  91   2            break;
+  92   2          
+  93   2          case Pids:
+  94   2            strcpy(reponse, "pids\r");
+  95   2            break;
+  96   2            
+  97   2          case Stop:
+  98   2            strcpy(reponse, "stop\r");
+  99   2            break;
+ 100   2            
+ 101   2          case Vel:
+ 102   2            strcpy(reponse, "vel\r");
+ 103   2            break;
+ 104   2            
+ 105   2          case Restore:
+ 106   2            strcpy(reponse, "restore\r");
+ 107   2            break;
+ 108   2            
+ 109   2          default:  // pas normal
+ 110   2            break;
+ 111   2        }
+ 112   1        return reponse;
+ 113   1      }
+ 114          
+ 115          char* getReponse(void)
+ 116          {
+C51 COMPILER V9.52.0.0   ENCODAGEM2                                                        05/18/2017 17:39:00 PAGE 3   
+
+ 117   1        char reponse[30];
+ 118   1        char carac;
+ 119   1        char i=0;
+ 120   1        
+ 121   1        do {
+ 122   2          carac = Getchar(1); // attend la réponse de laserializer, UART1
+ 123   2          *(reponse+i) = carac;
+ 124   2          i++;
+ 125   2        } while(carac != '>');  // tant que la fin de la réponse n'est pas arrivée
+ 126   1        return reponse;
+ 127   1      }
+ 128          
+ 129          struct INFORMATIONS_SERIALIZER decode(char *reponse)
+ 130          {
+ 131   1        struct INFORMATIONS_SERIALIZER info;
+ 132   1        
+ 133   1        switch (derniereCommande)
+ 134   1        {
+ 135   2          case Getenc_1:
+ 136   2            info.Etat_Response = Rep_getenc;
+ 137   2            sscanf(reponse, "%d %*s", (int*)&info.Read_Val_enc_1);
+ 138   2            break;
+ 139   2          case Getenc_2:
+ 140   2            info.Etat_Response = Rep_getenc;
+ 141   2            sscanf(reponse, "%d %*s", (int*)&info.Read_Val_enc_2);
+ 142   2            break;
+ 143   2          case Getenc_1_2:
+ 144   2            info.Etat_Response = Rep_getenc;
+ 145   2            sscanf(reponse, "%d %d %*s", (int*)&info.Read_Val_enc_1, (int*)&info.Read_Val_enc_2);
+ 146   2            break;
+ 147   2          
+ 148   2          case Vpid_read:
+ 149   2            info.Etat_Response = Rep_vpid;
+ 150   2            sscanf(reponse, "P:%d I:%d D:%d L:%d%*s", (int*)&info.Read_P, (int*)&info.Read_I, (int*)&info.Read_D, (
+             -int*)&info.Read_L_A);
+ 151   2            break;
+ 152   2            
+ 153   2          case Dpid_read:
+ 154   2            info.Etat_Response = Rep_dpid;
+ 155   2            sscanf(reponse, "P:%d I:%d D:%d A:%d%*s", (int*)&info.Read_P, (int*)&info.Read_I, (int*)&info.Read_D, (
+             -int*)&info.Read_L_A);
+ 156   2            break;
+ 157   2            
+ 158   2          case Pids:
+ 159   2            info.Etat_Response = Rep_pids;
+ 160   2            sscanf(reponse, "\r\n%c%*s", &info.Read_Pids);
+ 161   2            break;
+ 162   2      
+ 163   2          case Vel:
+ 164   2            info.Etat_Response = Rep_vel;
+ 165   2            sscanf(reponse, "%d %d %*s", (int*)&info.Read_Vitesse_mot1, (int*)&info.Read_Vitesse_mot2);
+ 166   2            break;      
+ 167   2        }
+ 168   1        return info;
+ 169   1      }
+ 170          
+ 171          struct INFORMATIONS_SERIALIZER envoyerStruct(struct COMMANDES_SERIALIZER c)
+ 172          {
+ 173   1        char reponse[30];
+ 174   1        int i=0;
+ 175   1        struct INFORMATIONS_SERIALIZER info;
+ 176   1        derniereCommande = c.Etat_Commande; // pour savoir a quelle reponse s'attendre
+C51 COMPILER V9.52.0.0   ENCODAGEM2                                                        05/18/2017 17:39:00 PAGE 4   
+
+ 177   1        Send_String(1, encode(c));
+ 178   1        
+ 179   1        strcpy(reponse, getReponse());
+ 180   1        if (strcmp(reponse, "\r\nNACK\r\n>") != 0) 
+ 181   1        {
+ 182   2          info = decode(reponse);
+ 183   2        }
+ 184   1        else
+ 185   1        {
+ 186   2          Send_String(0,"NACK"); 
+ 187   2        }
+ 188   1        
+ 189   1        return info;
+ 190   1      }
+ 191          
+ 192          void pids()
+ 193          {
+ 194   1          //char test[40];
+ 195   1          struct COMMANDES_SERIALIZER commandeSerializer;
+ 196   1          struct INFORMATIONS_SERIALIZER info;
+ 197   1           
+ 198   1          
+ 199   1          commandeSerializer.Etat_Commande = Pids;
+ 200   1          info = envoyerStruct(commandeSerializer);
+ 201   1          //sprintf(test,"Read_Pids : %d\n", (int)info.Read_Pids); // renvoie 29 = unit separator??
+ 202   1          //Send_String(0,test);
+ 203   1           
+ 204   1          while(info.Read_Pids!='0')
+ 205   1          {
+ 206   2              info = envoyerStruct(commandeSerializer);
+ 207   2              //sprintf(test,"Read_Pids : %d\n", info.Read_Pids);
+ 208   2              //Send_String(0,test);
+ 209   2          }
+ 210   1          
+ 211   1      }
+ 212          
+ 213          void mouvement(struct COMMANDES commande) 
+ 214          {
+ 215   1        struct INFORMATIONS_SERIALIZER info; // pour examiner la réponse
+ 216   1        struct COMMANDES_SERIALIZER commandeSerializer; // struct à envoyer à M2
+ 217   1        
+ 218   1        switch(commande.Etat_Mouvement)
+ 219   1        {
+ 220   2          
+ 221   2          case Avancer:
+ 222   2            commandeSerializer.Etat_Commande = mogo_1_2;  // on fait tourner les moteurs
+ 223   2            commandeSerializer.Vitesse_Mot1 = commande.Vitesse; 
+ 224   2            commandeSerializer.Vitesse_Mot2 = commande.Vitesse;   
+ 225   2            break;
+ 226   2          case Reculer:
+ 227   2            commandeSerializer.Etat_Commande = mogo_1_2;  // on fait tourner les moteurs
+ 228   2            commandeSerializer.Vitesse_Mot1 = -commande.Vitesse;  
+ 229   2            commandeSerializer.Vitesse_Mot2 = -commande.Vitesse;
+ 230   2            break;
+ 231   2            
+ 232   2          case Stopper:
+ 233   2            commandeSerializer.Etat_Commande = Stop;
+ 234   2            break;
+ 235   2            
+ 236   2          case Rot_90D:
+ 237   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+C51 COMPILER V9.52.0.0   ENCODAGEM2                                                        05/18/2017 17:39:00 PAGE 5   
+
+ 238   2            commandeSerializer.Vitesse_Mot1 = 10; //commande.Vitesse; //le moteur 1 (gauche ?) tourne vers l'avant
+ 239   2            commandeSerializer.Vitesse_Mot2 = 10; //commande.Vitesse; // l'autre vers l'arrière
+ 240   2            commandeSerializer.Ticks_mot1 = -500; 
+ 241   2            commandeSerializer.Ticks_mot2 = 500; 
+ 242   2            break;
+ 243   2          case Rot_90G:
+ 244   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+ 245   2            commandeSerializer.Vitesse_Mot1 = 10; //commande.Vitesse; //le moteur 1 (gauche ?) tourne vers l'avant
+ 246   2            commandeSerializer.Vitesse_Mot2 = 10; //commande.Vitesse; // l'autre vers l'arrière
+ 247   2            commandeSerializer.Ticks_mot1 = 500; 
+ 248   2            commandeSerializer.Ticks_mot2 = -500; 
+ 249   2            break;
+ 250   2            
+ 251   2          case Rot_180D:
+ 252   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+ 253   2            commandeSerializer.Vitesse_Mot1 = 10; //commande.Vitesse; //le moteur 1 (gauche ?) tourne vers l'avant
+ 254   2            commandeSerializer.Vitesse_Mot2 = 10; //commande.Vitesse; // l'autre vers l'arrière
+ 255   2            commandeSerializer.Ticks_mot1 = -1000; 
+ 256   2            commandeSerializer.Ticks_mot2 = 1000; 
+ 257   2            break;
+ 258   2          case Rot_180G:
+ 259   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+ 260   2            commandeSerializer.Vitesse_Mot1 = 10; //commande.Vitesse; //le moteur 1 (gauche ?) tourne vers l'avant
+ 261   2            commandeSerializer.Vitesse_Mot2 = 10; //commande.Vitesse; // l'autre vers l'arrière
+ 262   2            commandeSerializer.Ticks_mot1 = 1000; 
+ 263   2            commandeSerializer.Ticks_mot2 = -1000; 
+ 264   2            break;
+ 265   2            
+ 266   2          case Rot_AngD:
+ 267   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+ 268   2            commandeSerializer.Vitesse_Mot1 = 10; //commande.Vitesse; //le moteur 1 (gauche ?) tourne vers l'avant
+ 269   2            commandeSerializer.Vitesse_Mot2 = 10; //commande.Vitesse; // l'autre vers l'arrière
+ 270   2            commandeSerializer.Ticks_mot1 = -commande.Angle*5.5; // à tester, j'en sais rien
+ 271   2            commandeSerializer.Ticks_mot2 = commande.Angle*5.5; // à tester, j'en sais rien
+ 272   2            break;
+ 273   2          case Rot_AngG:
+ 274   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+ 275   2            commandeSerializer.Vitesse_Mot1 = 10; //commande.Vitesse; //le moteur 1 (gauche ?) tourne vers l'avant
+ 276   2            commandeSerializer.Vitesse_Mot2 = 10; //commande.Vitesse; // l'autre vers l'arrière
+ 277   2            commandeSerializer.Ticks_mot1 = commande.Angle*5.5; 
+ 278   2            commandeSerializer.Ticks_mot2 = -commande.Angle*5.5; 
+ 279   2            break;
+ 280   2            
+ 281   2          case Depl_Coord:
+ 282   2            commandeSerializer.Etat_Commande = digo_1_2;  // on fait tourner les 2 moteurs sur une certaine distance
+             - pour obtenir une rotation
+ 283   2            commandeSerializer.Vitesse_Mot1 = commande.Vitesse; //commande.Vitesse; //le moteur 1 (gauche ?) tourne
+             - vers l'avant
+ 284   2            commandeSerializer.Vitesse_Mot2 = commande.Vitesse; //commande.Vitesse; // l'autre vers l'arrière
+ 285   2            commandeSerializer.Ticks_mot1 = commande.Coord_X*335; 
+ 286   2            commandeSerializer.Ticks_mot2 = commande.Coord_X*335; 
+ 287   2            break;
+ 288   2            
+ 289   2          default:  // pas normal
+ 290   2            break;
+ 291   2        }
+ 292   1        
+C51 COMPILER V9.52.0.0   ENCODAGEM2                                                        05/18/2017 17:39:00 PAGE 6   
+
+ 293   1        info = envoyerStruct(commandeSerializer);
+ 294   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1748    ----
+   CONSTANT SIZE    =    329    ----
+   XDATA SIZE       =      1     266
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

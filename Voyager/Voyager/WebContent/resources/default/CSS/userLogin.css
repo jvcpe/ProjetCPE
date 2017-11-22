@@ -1,0 +1,46 @@
+body {
+    background-color:#666666;
+    font-family :cursive;
+    font-size: 110%;
+    margin : 0px 1% 1% 1%;
+    padding: 0px 1% 1% 1%;
+}
+  
+form {
+
+  text-align:center;
+  color:#f4dca2;
+  width:30%;    
+  margin: 1% auto;
+  padding: 1%;
+  
+  }
+  
+input {
+
+  font-family:cursive;
+  border:1px solid #ccc;
+  font-size:20px;
+
+  margin-bottom:3%;
+  padding-bottom:1%;
+  margin-top:1%;
+  outline: none;
+
+  border-radius:5px;
+
+  
+  }
+  
+  .c
+  {
+  	text-align:center;
+  	color:#f4dca2;
+  }
+  
+  #header
+{
+	margin-bottom : 30px;
+	text-align:center;
+	margin-top : 30px;
+}

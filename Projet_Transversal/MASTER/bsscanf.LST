@@ -1,0 +1,397 @@
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE BSSCANF
+OBJECT MODULE PLACED IN bsscanf.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE bsscanf.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <stdarg.h>
+   2          #include <stdio.h>
+   3          #include "bsscanf.h"
+   4          #include "Putchar_Getchar.h"
+   5          
+   6          int puissance(int nombre, int exposant)
+   7          {
+   8   1          int i=1;
+   9   1      
+  10   1          if (exposant==0)
+  11   1              return 1;
+  12   1      
+  13   1          for (i=1; i<exposant; i++)
+  14   1          {
+  15   2              nombre *= nombre;
+  16   2          }
+  17   1          return nombre;
+  18   1      }
+  19          /*
+  20          int bsscanf(char *stream, char *format, ...)    // à améliorer : virer le tableau de pointeurs et mettre .
+             -..
+  21          {
+  22              va_list ap; // pointe vers l'argument, <==> iArgs
+  23          
+  24              char test[40];
+  25              int nbArgLu=0;
+  26          
+  27              int compteurNombre=0;
+  28              int produit=1;
+  29              int somme=0;
+  30          
+  31              int indiceChaine=0;
+  32              char *pChaine;
+  33          
+  34              char *pChar;
+  35          
+  36              char *iStream = stream;
+  37              char *iFormat = format;
+  38            
+  39              va_start(ap, *format); // indique le dernier paramètre obligatoire
+  40          
+  41              sprintf (test,"Chaine format : %s\n\n", iFormat);
+  42              Send_String(0,test);
+  43              while(*iFormat != '\0') // on parcourt tout le format
+  44              {
+  45                  sprintf(test,"\nformat : %c ==> ", *iFormat);
+  46                Send_String(0,test);
+  47                  if (*iFormat != '%') // si le caractère ne fait pas partie d'un format (%c, %d...)
+  48                  {
+  49                      sprintf(test,"caractere useless\n");
+  50                    Send_String(0,test);
+  51                      sprintf(test,"iStream : %c\n", *iStream);
+  52                    Send_String(0,test);
+  53                      while (*iFormat != *iStream)    // tant qu'on élimine pas les caractères "inutiles" du format 
+             -ou fin de chaine stream
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 2   
+
+  54                      {
+  55                          iStream++;
+  56                          sprintf(test,"iStream : %c\n", *iStream);
+  57                        Send_String(0,test);
+  58                          if (*iStream == '\0') // on arrive à la fin du stream
+  59                              return nbArgLu;
+  60                      }
+  61                      iStream++; // pour bien éliminer le caractère que l'on a trouvé
+  62                      sprintf(test,"iStream : %c\n", *iStream);
+  63                      Send_String(0,test);
+  64                  }
+  65          
+  66                  else        // on vient d'arriver à un %
+  67                  {
+  68                      sprintf(test,"POURCENT ==> ");
+  69                    Send_String(0,test);
+  70                      iFormat++;  // on regarde la caractère après le %
+  71          
+  72                      switch (*iFormat)
+  73                      {
+  74                      case 'c':   // un caractère
+  75                          sprintf(test,"c ==> %c\n", *iStream);
+  76                      Send_String(0,test);
+  77                          pChar = va_arg(ap, char*);
+  78                          sprintf(test,"%c\n",*pChar);
+  79                      Send_String(0,test);
+  80                          *pChar = *iStream;
+  81                          sprintf(test,"%c\n",*pChar);
+  82                      Send_String(0,test);
+  83                          nbArgLu++;
+  84                          break;
+  85          
+  86                      case 'C':   // un caractère autre que espace
+  87                          //printf("c ==> %c\n", *iStream);
+  88                          while(*iStream == ' ')  // on dégage les espaces
+  89                              iStream++;
+  90                          pChar = va_arg(ap, char*);
+  91                          //printf("%p\n",pChar);
+  92                          *pChar = *iStream;
+  93                          nbArgLu++;
+  94                          break;
+  95          
+  96          
+  97                      case 's':   // une chaine de caractères
+  98                          //printf("s\n");
+  99                          pChaine=va_arg(ap, char*); // contient l'adresse d'une chaine
+ 100                          while(*iStream == ' ')  // on dégage les espaces
+ 101                              iStream++;
+ 102                          //printf("plus d'espace : %s\n", iStream);
+ 103          
+ 104                          while (*iStream != ' ' && *iStream != '\0')    // tant qu'on est pas arrivé à un espace
+ 105                          {
+ 106                             // printf("Entree boucle\t %s", pChaine);
+ 107                              *(pChaine+indiceChaine) = *iStream;
+ 108                              //printf("iStream : %c, **pChaine : %c\n", *iStream, *pChaine);
+ 109                              iStream++;
+ 110                              indiceChaine++;
+ 111                          }
+ 112                          *(pChaine+indiceChaine)='\0';   // fin de chaine de caractère ajoutée manuellement
+ 113                          nbArgLu++;
+ 114                          indiceChaine=0;
+ 115                          //printf("CHAINE : %s\n",*iArgs);
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 3   
+
+ 116                          break;
+ 117          
+ 118                      case 'd':   // un entier decimal int
+ 119                          sprintf(test,"d ==> \n");
+ 120                      Send_String(0,test);
+ 121                          while(*iStream < '0' || *iStream > '9')  // on dégage les char diff d'un chiffre
+ 122                              iStream++;
+ 123                          while (*iStream >= '0' && *iStream <= '9')    // tant qu'on est pas arrivé à un espace
+ 124                          {
+ 125                              sprintf(test,"n : %c\n", *iStream);
+ 126                            Send_String(0,test);
+ 127                              iStream++;
+ 128                              compteurNombre++;
+ 129                          }
+ 130          
+ 131                          somme=0;  // la valeur de l'entier est mise à 0
+ 132                          while(compteurNombre>0)
+ 133                          {
+ 134                              produit = (*(iStream-compteurNombre)-48) * puissance(10,compteurNombre-1);
+ 135                              somme += produit;
+ 136                              compteurNombre--;
+ 137                          }
+ 138                          *va_arg(ap, int*) = somme;
+ 139                          nbArgLu++;
+ 140                          compteurNombre=0; // on le remet à zero pour plus tard
+ 141                          break;
+ 142          
+ 143                      case 'b':   // un entier decimal BYTE (char)
+ 144                          //printf("d ==> \n");
+ 145                          while(*iStream < '0' || *iStream > '9')  // on dégage les char diff d'un chiffre
+ 146                              iStream++;
+ 147                          while (*iStream >= '0' && *iStream <= '9')    // tant qu'on est pas arrivé à un espace
+ 148                          {
+ 149                              //printf("n : %c\n", *iStream);
+ 150                              iStream++;
+ 151                              compteurNombre++;
+ 152                          }
+ 153          
+ 154                          somme=0;  // la valeur de l'entier est mise à 0
+ 155                          while(compteurNombre>0)
+ 156                          {
+ 157                              produit = (*(iStream-compteurNombre)-48) * puissance(10,compteurNombre-1);
+ 158                              somme += produit;
+ 159                              compteurNombre--;
+ 160                          }
+ 161                          *va_arg(ap, char*) = somme;
+ 162                          nbArgLu++;
+ 163                          compteurNombre=0; // on le remet à zero pour plus tard
+ 164                          break;
+ 165                          
+ 166                      case 'u':   // un entier decimal  unsigned BYTE (char)
+ 167                          //printf("d ==> \n");
+ 168                          while(*iStream < '0' || *iStream > '9')  // on dégage les char diff d'un chiffre
+ 169                              iStream++;
+ 170                          while (*iStream >= '0' && *iStream <= '9')    // tant qu'on est pas arrivé à un espace
+ 171                          {
+ 172                              //printf("n : %c\n", *iStream);
+ 173                              iStream++;
+ 174                              compteurNombre++;
+ 175                          }
+ 176          
+ 177                          somme=0;  // la valeur de l'entier est mise à 0
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 4   
+
+ 178                          while(compteurNombre>0)
+ 179                          {
+ 180                              produit = (*(iStream-compteurNombre)-48) * puissance(10,compteurNombre-1);
+ 181                              somme += produit;
+ 182                              compteurNombre--;
+ 183                          }
+ 184                          *va_arg(ap, unsigned char*) = somme;
+ 185                          nbArgLu++;
+ 186                          compteurNombre=0; // on le remet à zero pour plus tard
+ 187                          break;
+ 188          
+ 189                      case '?':   // test la présence d'un caractère
+ 190                          iFormat++;  // pointe le caractère en question
+ 191                          pChar = va_arg(ap, char*);
+ 192                          if (*iFormat == *iStream)
+ 193                          {
+ 194                              *pChar = *iStream;
+ 195                          }
+ 196                          nbArgLu++;
+ 197                          break;
+ 198                      }
+ 199                  }
+ 200          
+ 201                  iFormat++;  // caractère suivant
+ 202              }
+ 203              va_end(ap);
+ 204              //printf("%p ==> %c\n",pChar,*pChar);
+ 205              return nbArgLu;
+ 206          }*/
+ 207          /*
+ 208          int main()
+ 209          {
+ 210              //char buffer[40]="RA : chaine A";
+ 211              char buffer[100]="RA chaine A:300\r NABIL : 7";
+ 212              char chaine[40]="test",chaine2[40];
+ 213              char AB = 'B', GD = 'G';
+ 214              char nabil=0;
+ 215              int angle=500;
+ 216          
+ 217              /*void * tab[40];// = malloc(5*sizeof(void*));
+ 218              tab[0] = (void*)chaine;
+ 219              tab[1] = (void*)&GD;
+ 220              tab[2] = (void*)&AB;
+ 221              tab[3] = (void*)&angle;
+ 222              tab[4] = (void*)chaine2;
+ 223              tab[5] = (void*)&nabil;
+ 224          
+ 225              ///bsscanf(buffer, "RA %s%?D %C:%d\r%s %b", chaine, &GD, &AB, &angle, chaine2, &nabil);
+ 226              //printf("%p ==> %c\n",&GD, GD);
+ 227              //bsscanf(buffer,"RA %s %c %c:%d %s", chaine, &GD, &AB, &angle, chaine2);
+ 228              //printf("chaine: %s, GD : %c, AB : %c angle : %d chaine2 : %s", chaine, GD, AB, angle, chaine2);
+ 229              ///printf("String : %s, GD : %c, char : %c angle : %d chaine 2 :%s %d\n", chaine, GD, AB, angle, chain
+             -e2, nabil);
+ 230              //free(tab);
+ 231             /* while(1);
+ 232              return 0;
+ 233          }*/
+ 234          int bsscanf(char *stream, char *format, void **args)    // à améliorer : virer le tableau de pointeurs et 
+             -mettre ...
+ 235          {
+ 236   1      //  char test[40];
+ 237   1          int nbArgLu=0;
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 5   
+
+ 238   1          int compteurNombre=0;
+ 239   1          int produit=1;
+ 240   1          int indiceChaine=0;
+ 241   1      
+ 242   1          char *iStream = stream;
+ 243   1          char *iFormat = format;
+ 244   1          char **iArgs = args;
+ 245   1      
+ 246   1          //char testiargs='z';
+ 247   1      
+ 248   1          //sprintf (test,"\nChaine format : %s\n\n", iFormat);
+ 249   1          //Send_String(0,test);
+ 250   1          //sprintf (test,"\nChaine commande : \n%s\n\n", iStream);
+ 251   1          //Send_String(0,test);
+ 252   1      
+ 253   1          while(*iFormat != '\0') // on parcourt tout le format
+ 254   1          {
+ 255   2             // printf("\nformat : %c ==> ", *iFormat);
+ 256   2              if (*iFormat != '%') // si le caractère ne fait pas partie d'un format (%c, %d...)
+ 257   2              {
+ 258   3                  //printf("caractere useless\n");
+ 259   3                  //printf("iStream : %c\n", *iStream);
+ 260   3                  while (*iFormat != *iStream)    // tant qu'on élimine pas les caractères "inutiles" du format 
+             -ou fin de chaine stream
+ 261   3                  {
+ 262   4                      iStream++;
+ 263   4                      //printf("iStream : %c\n", *iStream);
+ 264   4                      if (*iStream == '\0') // on arrive à la fin du stream
+ 265   4                          return nbArgLu;
+ 266   4                  }
+ 267   3                  iStream++; // pour bien éliminer le caractère que l'on a trouvé
+ 268   3                  //printf("iStream : %c\n", *iStream);
+ 269   3              }
+ 270   2      
+ 271   2              else        // on vient d'arriver à un %
+ 272   2              {
+ 273   3                  //printf("POURCENT ==> ");
+ 274   3                  iFormat++;  // on regarde la caractère après le %
+ 275   3      
+ 276   3                  switch (*iFormat)
+ 277   3                  {
+ 278   4                  case 'c':   // un caractère
+ 279   4                      //printf("c ==> %c\n", *iStream);
+ 280   4                      **iArgs = *iStream;
+ 281   4                      iArgs++;
+ 282   4                      nbArgLu++;
+ 283   4                      break;
+ 284   4      
+ 285   4                  case 'C':   // un caractère autre que espace
+ 286   4                      //printf("c ==> %c\n", *iStream);
+ 287   4                      while(*iStream == ' ')  // on dégage les espaces
+ 288   4                          iStream++;
+ 289   4                      **iArgs = *iStream;
+ 290   4                      iArgs++;
+ 291   4                      nbArgLu++;
+ 292   4                      break;
+ 293   4      
+ 294   4      
+ 295   4                  case 's':   // une chaine de caractères
+ 296   4                      //printf("s\n");
+ 297   4                      while(*iStream == ' ')  // on dégage les espaces
+ 298   4                          iStream++;
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 6   
+
+ 299   4                      while (*iStream != ' ' && *iStream != '\0')    // tant qu'on est pas arrivé à un espace
+ 300   4                      {
+ 301   5                          *(*iArgs+indiceChaine) = *iStream;
+ 302   5                       //   printf("iStream : %c, **iArgs : %c\n", *iStream, **iArgs);
+ 303   5                          iStream++;
+ 304   5                          indiceChaine++;
+ 305   5                      }
+ 306   4                      *(*iArgs+indiceChaine)='\0';   // fin de chaine de caractère ajoutée manuellement
+ 307   4                      iArgs++;
+ 308   4                      nbArgLu++;
+ 309   4                      indiceChaine=0;
+ 310   4                      //printf("CHAINE : %s\n",*iArgs);
+ 311   4                      break;
+ 312   4      
+ 313   4                  case 'd':   // un entier decimal
+ 314   4                      //sprintf(test,"\nd ==>  %s\n", iStream);
+ 315   4                      //Send_String(0,test);
+ 316   4                  
+ 317   4                      while(*iStream < '0' || *iStream > '9')  // on dégage les espaces
+ 318   4                          iStream++;
+ 319   4                      while (*iStream >= '0' && *iStream <= '9')    // tant qu'on est pas arrivé à un espace
+ 320   4                      {
+ 321   5                        //  sprintf(test, "n : %c\n", *iStream);
+ 322   5                        //  Send_String(0,test);
+ 323   5                          iStream++;
+ 324   5                          compteurNombre++;
+ 325   5                      }
+ 326   4      
+ 327   4                      **iArgs=0;  // la valeur de l'entier est mise à 0
+ 328   4                      while(compteurNombre>0)
+ 329   4                      {
+ 330   5                          produit = (*(iStream-compteurNombre)-48) * puissance(10,compteurNombre-1);
+ 331   5                          **iArgs += produit;
+ 332   5                          compteurNombre--;
+ 333   5                      }
+ 334   4      
+ 335   4                      iArgs++;
+ 336   4                      nbArgLu++;
+ 337   4                      compteurNombre=0; // on le remet à zero pour plus tard
+ 338   4                      break;
+ 339   4      
+ 340   4                  case '?':   // test la présence d'un caractère
+ 341   4                      iFormat++;  // pointel e caractère en question
+ 342   4                      if (*iFormat == *iStream)
+ 343   4                      {
+ 344   5                          **iArgs = *iStream;
+ 345   5                      }
+ 346   4                      iArgs++;
+ 347   4                      nbArgLu++;
+ 348   4                      break;
+ 349   4                  }
+ 350   3              }
+ 351   2      
+ 352   2              iFormat++;  // caractère suivant
+ 353   2          }
+ 354   1      
+ 355   1          return nbArgLu;
+ 356   1      }
+ 357          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.52.0.0   BSSCANF                                                           05/18/2017 17:38:59 PAGE 7   
+
+   CODE SIZE        =    981    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      30
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

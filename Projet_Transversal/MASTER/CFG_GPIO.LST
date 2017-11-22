@@ -1,0 +1,54 @@
+C51 COMPILER V9.52.0.0   CFG_GPIO                                                          05/18/2017 17:38:57 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_GPIO
+OBJECT MODULE PLACED IN CFG_GPIO.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_GPIO.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          //------------------------------------------------------------------------------------
+   2          // CFG_GPIO.c
+   3          //------------------------------------------------------------------------------------
+   4          //
+   5          // AUTH: 
+   6          // DATE: 
+   7          // Target: C8051F02x
+   8          //
+   9          // Tool chain: KEIL PK51
+  10          //
+  11          //OBJECTIF: Configuration des GPIO
+  12          //-----------------------------------------------------------------------------------
+  13          // Includes
+  14          //------------------------------------------------------------------------------------
+  15          #include <c8051f020.h>
+  16          #include "Declarations_GPIO_BSE.h"
+  17          #include <intrins.h>
+  18          #include <CFG_GPIO.h>                 
+  19          //-----------------------------------------------------------------------------
+  20          // Function PROTOTYPES
+  21          //---------------------------------------
+  22          void Config_GPIO()
+  23          {
+  24   1        XBR0=0x6e;
+  25   1        XBR1=0xfe;
+  26   1        XBR2=0x5c;
+  27   1        
+  28   1        P0MDOUT|=0xc7;
+  29   1        P3MDOUT   = 0x38;
+  30   1        
+  31   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     16    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

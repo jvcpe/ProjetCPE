@@ -1,0 +1,55 @@
+C51 COMPILER V9.52.0.0   CFG_UART1                                                         05/18/2017 17:38:59 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_UART1
+OBJECT MODULE PLACED IN CFG_UART1.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_UART1.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          ///////////////////////////////
+   2          //CFG_UART1.c
+   3          ///////////////////////////////
+   4          
+   5          //
+   6          //Target: C8051F02x
+   7          //Tool chain: KEIL Eval 'c'
+   8          //
+   9          //Sous-ensemble FO-M2
+  10          #include <c8051f020.h>
+  11          #include "Declarations_GPIO_BSE.h"
+  12          #include <intrins.h>
+  13          #include "CFG_UART1.h"
+  14          
+  15          void config_uart1()
+  16          {
+  17   1          
+  18   1          T4CON|=0x30; //Le Timer 4 est utilisé pour la transmission et reception de l'UART1
+  19   1      
+  20   1          PCON  &= 0xF7;  // SSTAT1=0
+  21   1          PCON  |= 0x10;  // Désactive la division par 2 du BAUDRATE
+  22   1        
+  23   1          SCON1 &= 0x7F;
+  24   1          SCON1 |= 0x40;  // passe l'UART1 en mode 1
+  25   1          SCON1 |= 0x20;  // pour vérifier qu'il y a un bit de stop
+  26   1          
+  27   1          SCON1 &= 0xFC;  // clear les 2 flags
+  28   1          SCON1 |= 0x10;  // active l'uart1
+  29   1        
+  30   1          SCON1 |= 0x02;  // passe TI1 à 1
+  31   1      }
+  32            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     28    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

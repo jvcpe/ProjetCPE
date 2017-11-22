@@ -1,0 +1,81 @@
+C51 COMPILER V9.52.0.0   CFG_GLOBALE                                                       04/04/2017 14:43:10 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_GLOBALE
+OBJECT MODULE PLACED IN CFG_Globale.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_Globale.c LARGE BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <c8051f020.h>
+   2          #include "CFG_Globale.h"
+   3          
+   4          
+   5          void Reset_Sources_Init()  // désactivation du watch dog et activation des interruptions
+   6          {
+   7   1              EA=0; //Disable all interrupts
+   8   1              WDTCN=0xDE; //disable software watchdog timer
+   9   1              WDTCN=0xAD; 
+  10   1      }
+  11          
+  12          void Sysclk_Init(void)   // initialisation de l'horloge systeme
+  13          {
+  14   1              
+  15   1              int i;
+  16   1              //OSCICN=0x08; //CLKSL=1 uses exit oscillator as syst clck
+  17   1              
+  18   1            OSCXCN    = 0x67;
+  19   1          for (i = 0; i < 3000; i++);  // Wait 1ms for initialization
+  20   1          while ((OSCXCN & 0x80) == 0);
+  21   1          //OSCICN    = 0x08;
+  22   1                      OSCICN    = 0x0C;
+  23   1      
+  24   1              
+  25   1      }
+  26          
+  27          void Port_IO_Init(void)  // Initialisation des ports d'entrée sortie
+  28          {
+  29   1                      P0MDOUT   =  0x01;
+  30   1                XBR0      = 0x04;
+  31   1          XBR2      = 0x44;
+  32   1      
+  33   1          XBR2      = 0x44; // 44 si on veut UART1 enabled 40 sinon
+  34   1                P3        = 0xFF;
+  35   1      
+  36   1                      XBR0      = 0x0E;
+  37   1          XBR2      = 0x44;
+  38   1          P3MDOUT   = 0x30;
+  39   1                      P1MDOUT   = 0x01;
+  40   1              
+  41   1              
+  42   1              
+  43   1      
+  44   1      }
+  45          
+  46          void Init_Device(void)   //Cette fonction fait appelle aux autres fonctions d'initialisation du microcontr
+             -oleur
+  47          {
+  48   1              
+  49   1              Reset_Sources_Init(); //Desactivation du Watchodog
+  50   1              Sysclk_Init(); //Config de l'horloge systeme
+  51   1              Port_IO_Init(); //Affectation des broches aux periphériques internes et config de ces broches
+  52   1      }                
+  53          
+  54          
+C51 COMPILER V9.52.0.0   CFG_GLOBALE                                                       04/04/2017 14:43:10 PAGE 2   
+
+  55          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     72    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,50 @@
+C51 COMPILER V9.52.0.0   CFG_TIMER4                                                        05/18/2017 17:38:59 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_TIMER4
+OBJECT MODULE PLACED IN CFG_TIMER4.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_TIMER4.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          ///////////////////////////////
+   2          //CFG_TIMER4.c
+   3          ///////////////////////////////
+   4          
+   5          //
+   6          //Target: C8051F02x
+   7          //Tool chain: KEIL Eval 'c'
+   8          //
+   9          //Sous-ensemble FO-M2
+  10          #include <c8051f020.h>
+  11          #include "Declarations_GPIO_BSE.h"
+  12          #include <intrins.h>
+  13          #include "CFG_TIMER4.h"
+  14          
+  15          void config_timer4()
+  16          {
+  17   1          CKCON |= 0x40;
+  18   1        
+  19   1          T4CON |= 0x30; // on passe les bits 4 et 5 à 1 pour fonctionner en baud generator
+  20   1          T4CON &= 0x7F;  // clear le flag d'overflow du timer 4
+  21   1          EIE2 &= 0xFB;   // désactive les interruptions de T4
+  22   1        
+  23   1          RCAP4H = 0xff;  // valeur de rechargement pour baudrate=19200
+  24   1          RCAP4L = 0xdc;  // on met 36 parce qu'il faut faire 65500 coups d'horloge
+  25   1          
+  26   1          T4CON |= 0x04;  // active le timer
+  27   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     22    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,13 @@
+"STARTUP.obj",
+"CFG_SPI_Slave.obj",
+"SPI_Slave.obj",
+"Putchar_Getchar.obj",
+"main.obj",
+"CMD_Servomoteur.obj",
+"CFG_UART0.obj",
+"CFG_Timer1.obj",
+"CFG_PCA0.obj",
+"CFG_Timer2.obj",
+"Lumiere.obj" 
+TO "slave" 
+RAMSIZE(256) 

@@ -1,0 +1,82 @@
+body
+{
+	background-color:#666666;	
+}
+canvas {
+	
+	position: absolute;
+}
+
+
+#position_robot {
+	position: absolute;
+
+}
+
+#parcours_robot {
+	position: absolute;
+
+}
+#canvas_robot
+{
+	position: relative;
+}
+#position_mur {
+	position: absolute;
+
+}
+
+#pos_brouillard {
+	position: absolute;
+
+}
+
+#navigation_automatique{
+	position: absolute;
+	display: inline-block;
+}
+
+
+
+.divFleches {
+	display: inline-block;
+
+	margin-top: 420px;
+	position: absolute;
+}
+
+#up {
+	margin-left: 70px;
+	display: inline-block;
+	position: absolute;
+}
+
+#left {
+	margin-top: 70px;
+	position: absolute;
+	display: inline-block;
+}
+
+#right {
+	margin-top: 70px;
+	margin-left: 125px;
+	position: absolute;
+	display: inline-block;
+}
+
+#down {
+	margin-left: 70px;
+	margin-top: 130px;
+	display: inline-block;
+	position: absolute;
+}
+#container1, #container2, #container3, #container4
+{
+	height: 200px;
+}
+header
+{
+	margin-bottom : 30px;
+	text-align:center;
+	margin-top : 30px;
+}

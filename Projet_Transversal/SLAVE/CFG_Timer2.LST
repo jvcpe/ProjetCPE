@@ -1,0 +1,81 @@
+C51 COMPILER V9.52.0.0   CFG_TIMER2                                                        05/18/2017 17:23:31 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_TIMER2
+OBJECT MODULE PLACED IN CFG_Timer2.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_Timer2.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          //-------------------------------------------------------------------------------------
+   2          // CFG_Timer2.c
+   3          // Configuration et routine d'interruption du Timer2
+   4          //-------------------------------------------------------------------------------------
+   5          //AUTH: CASTELLO Maxime/MIOR Edouard
+   6          //DATE: 11/05/17
+   7          //
+   8          //
+   9          // Target: C8051F02x
+  10          // Tool chain: KEIL eval 'c'
+  11          //
+  12          // Objectifs : - Configuration du Timer 2
+  13          //             - Routine d'interruption du Timer 2
+  14          //             - Envoi d'une impulsion de largeur variable sur une sortie
+  15          //
+  16          //
+  17          // Documents utiles : Extraits de la Datasheet du C8051F020
+  18          
+  19          //--------------------------------------------------------------------------------------------------------
+             ----
+  20          // Includes
+  21          //--------------------------------------------------------------------------------------------------------
+             ----
+  22          #include "c8051F020.h"
+  23          #include "Declarations_GPIO_BSE.h"
+  24          #include "CFG_Timer2.h"
+  25          #include <stdio.h>
+  26          
+  27          void Config_Timer2()
+  28          {
+  29   1              EA=0;                       // Désactivation des interruption
+  30   1              CKCON &= 0xdf;  // MAZ bit6 - Tclk=SYSCLK/12
+  31   1              TF2 = 0;            // RAZ drapeau TF2 - overflow (T2CON)
+  32   1              EXF2=0;                 // RAZ flag EXF2 - drapeau externe du timer 2 (T2CON)
+  33   1              EXEN2=0;                // Timer 2 enable (T2CON)
+  34   1              CT2=0;                  // Mode Timer (T2CON)
+  35   1              CPRL2=0;                // Mode autoreload (T2CON)
+  36   1           
+  37   1              // Valeur de préchargement 
+  38   1              // Tick Time/Timer Period = 5ms/0.542us = 9225 -> (2409)H
+  39   1              // RCAP = FFFF-2409 = DBF6 
+  40   1              RCAP2L    = 0xF6;       
+  41   1              RCAP2H    = 0xDB;
+  42   1            //Chargement de la valeur de prechargement pour le premier cycle
+  43   1              TL2       = 0xF6;
+  44   1              TH2       = 0xDB;
+  45   1               
+  46   1              TR2=0;                  // Démarre le Timer (T2CON)
+  47   1              PT2=1;                  // Priorité haute (IP)
+  48   1              ET2=1;                  // Autorise les interruptions de Timer2 (IE)
+  49   1           
+  50   1              EA=1;                       // Autorise les interruptions (IE)  
+  51   1        
+  52   1      }
+  53          
+C51 COMPILER V9.52.0.0   CFG_TIMER2                                                        05/18/2017 17:23:31 PAGE 2   
+
+  54          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     36    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,65 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              03/28/2017 17:34:08 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          //--------------------------------------------------------------------------------------------------------
+             ----
+   2          // Main.c
+   3          //--------------------------------------------------------------------------------------------------------
+             ----
+   4          //
+   5          // AUTH: Edouard Mior
+   6          // DATE: 02/03/2017
+   7          //
+   8          // Target: C8051F02x
+   9          // Tool chain: KEIL eval 'c'
+  10          
+  11          //-----------------------------------------------------------------------------------
+  12          // Includes
+  13          //------------------------------------------------------------------------------------
+  14          #include "C8051F020.h"
+  15          #include "Declarations_GPIO_BSE.h"
+  16          #include "CMD_Servomoteur.h"
+  17          #include <stdio.h>
+  18          #include "intrins.h"
+  19          #include "CFG_Globale.h"
+  20          #include <math.h>
+  21          #include "LIB_BSE_UART.h"
+  22          int temps_dep_servomoteur_h;
+  23          
+  24          
+  25          void main(void)
+  26          {
+  27   1       
+  28   1        Reset_Sources_Init();
+  29   1          
+  30   1        Sysclk_Init();
+  31   1        Config_PCA0();
+  32   1        Port_IO_Init();
+  33   1        
+  34   1        
+  35   1        temps_dep_servomoteur_h=CMD_Servo_H (-90); // Sortie sur port 1.1
+  36   1        while(1)
+  37   1        {
+  38   2        
+  39   2        }
+  40   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     24    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

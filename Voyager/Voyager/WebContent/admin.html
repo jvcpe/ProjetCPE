@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+ <script src="https://d10ajoocuyu32n.cloudfront.net/jquery-1.9.1.min.js"></script>
+ <script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+
+
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+<script src="bootstrap/js/bootstrap-toggle.min.js"></script>
+<link href="bootstrap/css/bootstrap-toggle.min.css" rel="stylesheet">
+<link href="css/cmd2.css" rel="stylesheet">
+
+<title>COMMANDE</title>
+</head>
+
+<header>
+<img src="Images/banniere.png" alt="banniere">
+</header>
+
+<body>
+	<!DOCTYPE html>
+<html>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-3">
+        	<fieldset>
+				<legend> Boutons </legend>
+					<form>	
+					<p id="text_display">Position du Robot :</p>
+					<input id="pos_robot" checked data-toggle="toggle" type="checkbox" onClick="pos_robot()">
+					<p id="text_display">Parcours du Robot :</p>
+					<input id="parcourt_robot" checked data-toggle="toggle" type="checkbox" onClick="parcourt_robot()">
+					<p id="text_display">Position des Murs :</p>
+					<input id="pos_mur" checked data-toggle="toggle" type="checkbox" onClick="pos_mur()">
+					<p id="text_display">Navigation Automatique :</p>
+				    <input id="nav_auto" checked data-toggle="toggle" type="checkbox" onClick="nav_auto()">
+					<p id="text_display">Position du Brouillard :</p>
+					<input id="pos_brouillard" checked data-toggle="toggle" type="checkbox" onClick="pos_brouillard()">
+					
+					</form>
+			</fieldset>
+		</div>
+		
+        <div class="col-lg-5">
+        	<canvas id="Grille" width="500" height="300" style="z-index: 1"></canvas>
+			<canvas id="Robot" width="500" height="300" style="z-index: 3"></canvas>
+			<canvas id="Trajectoire" width="500" height="300" style="z-index: 2"></canvas>
+			<canvas id="Mur" width="500" height="300" style="z-index: 4"></canvas>
+			<canvas id="Brouillard" width="500" height="300" style="z-index: 5"></canvas>
+        </div>
+        
+        <fieldset>
+		<legend> Commandes </legend>
+		
+      	<a onClick="click_up();" class="btn btn-default">UP</a>
+      	<a onClick="click_left();" class="btn btn-default">LEFT</a>
+      	<a onClick="click_right();" class="btn btn-default">RIGHT</a>
+      	<a onClick="click_down();" class="btn btn-default">DOWN</a>
+      	</br></br>
+      	<a onClick="click_decoAdmin();" class="btn btn-default">Disconect</a>
+      	</br></br>
+      	<a onClick="click_telecommande();" class="btn btn-default">Telecommande</a>
+		
+		</fieldset>
+		
+		</div>
+		
+		<!-- Nouvelle ligne -->
+		
+		<div class="row">
+		
+		<div class="col-lg-2 col-lg-offset-2">
+        	<div id="container1"></div>
+		</div>
+		
+		<div class="col-lg-2">
+        	<div id="container2"></div>
+		</div>
+        <div class="col-lg-2">
+        	<div id="container3"></div>
+		</div>
+		<div class="col-lg-2">
+        	<div id="container4"></div>
+		</div>
+		</div>
+</div>
+ 
+<script type="text/javascript" src="js/Canvas.js"></script>
+<script type="text/javascript" src="js/Display.js"></script>
+<script type="text/javascript" src="js/test.js"></script>
+<script type="text/javascript" src="js/Fleches.js"></script>
+
+</body>
+
+<footer>
+</footer>
+
+
+</html>

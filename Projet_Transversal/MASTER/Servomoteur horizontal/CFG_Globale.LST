@@ -1,0 +1,88 @@
+C51 COMPILER V9.52.0.0   CFG_GLOBALE                                                       03/28/2017 17:34:09 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_GLOBALE
+OBJECT MODULE PLACED IN CFG_Globale.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_Globale.c BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <c8051f020.h>
+   2          #include "CFG_Globale.h"
+   3          //sbit BP = P3^7;  
+   4          
+   5          
+   6          void Reset_Sources_Init()  // désactivation du watch dog et activation des interruptions
+   7          {
+   8   1        EA=0; //Disable all interrupts
+   9   1        WDTCN=0xDE; //disable software watchdog timer
+  10   1        WDTCN=0xAD; 
+  11   1      }
+  12          
+  13          void Sysclk_Init(void)   // initialisation de l'horloge systeme
+  14          {
+  15   1        
+  16   1        int i;
+  17   1        //OSCICN=0x08; //CLKSL=1 uses exit oscillator as syst clck
+  18   1        
+  19   1            OSCXCN    = 0x67;
+  20   1          for (i = 0; i < 3000; i++);  // Wait 1ms for initialization
+  21   1          while ((OSCXCN & 0x80) == 0);
+  22   1          //OSCICN    = 0x08;
+  23   1          OSCICN    = 0x0C;
+  24   1      
+  25   1        
+  26   1      }
+  27          
+  28          void Port_IO_Init(void)  // Initialisation des ports d'entrée sortie
+  29          {
+  30   1          //P0MDOUT   =  0x07;
+  31   1          //XBR0      = 0x04;
+  32   1          //XBR2      = 0x44;
+  33   1      
+  34   1          //XBR2      = 0x44; // 44 si on veut UART1 enabled 40 sinon
+  35   1          //P3        = 0xFF;
+  36   1      
+  37   1          //XBR0      = 0x0E;
+  38   1          //XBR2      = 0x44;
+  39   1          //P3MDOUT   = 0x30;
+  40   1        
+  41   1        
+  42   1          
+  43   1        
+  44   1          P1MDOUT   = 0x07;
+  45   1          XBR0      = 0x1E;
+  46   1         // XBR0      = 0x07;
+  47   1          XBR1      = 0xAA;
+  48   1          XBR2      = 0x4C;
+  49   1        
+  50   1      
+  51   1      }
+  52          
+  53          void Init_Device(void)   //Cette fonction fait appelle aux autres fonctions d'initialisation du microcontr
+             -oleur
+  54          {
+C51 COMPILER V9.52.0.0   CFG_GLOBALE                                                       03/28/2017 17:34:09 PAGE 2   
+
+  55   1        
+  56   1        Reset_Sources_Init(); //Desactivation du Watchodog
+  57   1        Sysclk_Init(); //Config de l'horloge systeme
+  58   1        Port_IO_Init(); //Affectation des broches aux periphériques internes et config de ces broches
+  59   1      }    
+  60          
+  61          
+  62          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     57    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

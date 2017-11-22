@@ -1,0 +1,50 @@
+C51 COMPILER V9.52.0.0   CFG_SPI_MASTER                                                    05/18/2017 17:38:58 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CFG_SPI_MASTER
+OBJECT MODULE PLACED IN CFG_SPI_master.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CFG_SPI_master.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          ///////////////////////////////
+   2          //CFG_SPI_master.c
+   3          ///////////////////////////////
+   4          //AUTH: 
+   5          //DATE: 29/03/2016
+   6          //
+   7          //Target: C8051F02x
+   8          //Tool chain: KEIL Eval 'c'
+   9          //
+  10          //Sous-ensemble FO-MS1
+  11           #include <c8051f020.h>
+  12          #include "Declarations_GPIO_BSE.h"
+  13          #include <intrins.h>
+  14          #include "CFG_SPI_master.h"
+  15           
+  16          void config_spi_master()
+  17          {
+  18   1        SPI0CFG &= 0x3F;  // data sampled on first edge of clk, clk line idle low
+  19   1        SPI0CFG |= 0x07;  // envoie 8 bits par 8 bits
+  20   1        MSTEN = 1;      //fonctionne en Master
+  21   1        SPIF=1;         // met le flag à 1
+  22   1        SPI0CKR = 0xFF; // règle la sclk
+  23   1        P3__5 = 1; // NSS à 1 
+  24   1        
+  25   1        SPIEN = 1;  // active le SPI
+  26   1      }
+  27              
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     18    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

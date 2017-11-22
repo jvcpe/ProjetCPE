@@ -1,0 +1,19 @@
+"STARTUP.obj",
+"parseur.obj",
+"CMD_Servomoteur.obj",
+"Putchar_Getchar.obj",
+"Detec_Obstacle.obj",
+"CFG_GPIO.obj",
+"CFG_Timer1.obj",
+"CFG_UART0.obj",
+"CFG_SPI_master.obj",
+"SPI_Master.obj",
+"bsscanf.obj",
+"CFG_Timer3.obj",
+"CFG_TIMER4.obj",
+"CFG_UART1.obj",
+"detection.obj",
+"EncodageM2.obj",
+"main.obj" 
+TO "projet" 
+RAMSIZE(256) 

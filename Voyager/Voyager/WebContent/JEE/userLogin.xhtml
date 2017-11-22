@@ -1,0 +1,90 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core">
+
+<h:head>
+<title>Connection</title>
+
+<script src="bootstrap/js/bootstrap.min.js"></script>
+
+
+<script src="bootstrap/js/bootstrap-toggle.min.js"></script>
+
+
+<h:outputStylesheet library="default" name="CSS/userLogin.css" />
+</h:head>
+
+
+<body>
+
+<div id="header">
+<h:graphicImage value="/Images/banniere.png" />
+</div>
+
+	<h1 class="c">Login</h1>
+	<h:form>
+		<table border="0">
+			<tr>
+				<td>Your Login : </td>
+				<td><h:inputText id="userlogin" value="#{loginBean.login}"
+						required="true">
+					</h:inputText></td>
+			</tr>
+			<tr>
+				<td>Your Password : </td>
+				<td><h:inputSecret value="#{loginBean.pwd}" /></td>
+			</tr>
+			<tr>
+				<td>Taille Map</td>
+				<td><h:inputText value="#{loginBean.largeur}" /></td>
+			</tr>
+			
+			
+						<tr>
+				<td>Pourcentage de proba d'obstacle</td>
+				<td><h:inputText value="#{loginBean.proba}" /></td>
+			</tr>
+		
+			
+			
+			<tr> 
+				<td></td>
+				<td><h:commandButton value="OK"
+						action="#{userControlerBean.checkUser(loginBean)}" /></td>
+			</tr>
+
+		</table>
+	</h:form>
+	
+	
+	
+
+	
+
+	<h1 class="c">Inscription</h1>
+	<h:form>
+		<table border="0">
+			<tr>
+				<td>Your Login : </td>
+				<td><h:inputText id="userlogin" value="#{userSubmissionModelBean.login}"
+						required="true">
+					</h:inputText></td>
+			</tr>
+			<tr>
+				<td>Your Password : </td>
+				<td><h:inputSecret value="#{userSubmissionModelBean.pwd}" /></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><h:commandButton value="OK"
+						action="#{userControlerBean.checkAndAddUser(userSubmissionModelBean)}" /></td>
+			</tr>
+			
+		</table>
+	</h:form>
+</body>
+</html>

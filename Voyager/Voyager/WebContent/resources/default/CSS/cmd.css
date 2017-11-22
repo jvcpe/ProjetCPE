@@ -1,0 +1,103 @@
+body {
+
+}
+
+ul {
+	list-style: none;
+}
+
+#sectionleft
+{
+	margin-right:50px;
+}
+
+#sectioncenter
+{
+
+}
+#sectionright
+{
+	margin-left:700px;
+}
+#conteneur
+{
+	display:flex;
+}
+
+canvas {
+	border: 3px black ridge;
+	position: absolute;
+	padding-left: 175px;
+	padding-bottom:50px;
+	padding-top:30px;
+
+}
+
+
+#position_robot {
+	position: absolute;
+
+}
+
+#parcours_robot {
+	position: absolute;
+
+}
+#canvas_robot
+{
+	position: relative;
+}
+#position_mur {
+	position: absolute;
+
+}
+
+#navigation_automatique{
+	position: absolute;
+	display: inline-block;
+}
+
+#text_display {
+	margin-left: 95px;
+	white-space: nowrap;
+	line-height: 40px;
+}
+
+.divFleches {
+	display: inline-block;
+
+	margin-top: 420px;
+	position: absolute;
+}
+
+#up {
+	margin-left: 70px;
+	display: inline-block;
+	position: absolute;
+}
+
+#left {
+	margin-top: 70px;
+	position: absolute;
+	display: inline-block;
+}
+
+#right {
+	margin-top: 70px;
+	margin-left: 125px;
+	position: absolute;
+	display: inline-block;
+}
+
+#down {
+	margin-left: 70px;
+	margin-top: 130px;
+	display: inline-block;
+	position: absolute;
+}
+.divGraph
+{
+	border-style:solid;
+	margin-left:750px;
+	margin-bottom:50px;
+}

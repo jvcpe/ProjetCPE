@@ -1,0 +1,101 @@
+C51 COMPILER V9.52.0.0   LUMIERE                                                           05/18/2017 17:23:31 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE LUMIERE
+OBJECT MODULE PLACED IN Lumiere.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Lumiere.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "c8051F020.h"
+   2          #include "Lumiere.h"
+   3          #include "Declarations_GPIO_BSE.h"
+   4          #include <stdio.h>
+   5          
+   6          
+   7          unsigned int etat_LED=0;
+   8          unsigned int cpt_cycles=0;
+   9          unsigned int RTC_5ms;
+  10          int Int;
+  11          int L_ON;
+  12          int L_OFF;
+  13          int L_Nbr;
+  14          
+  15          void Lumiere(int Intensite, int Lum_ON, int Lum_OFF,int Lum_Nbr)
+  16          {
+  17   1          RTC_5ms=0;
+  18   1          Int=Intensite;
+  19   1          L_ON=Lum_ON;
+  20   1          L_OFF=Lum_OFF;
+  21   1          L_Nbr=Lum_Nbr;
+  22   1          PCA0CPM1=0xC2;// On lance le module 0 du PCA0
+  23   1          TR2=1; // On lance le Timer2
+  24   1      }
+  25          
+  26          
+  27          void Lumiere_Stop(void)
+  28          {
+  29   1        TR2=0; // On arrete le Timer2
+  30   1        PCA0CPM1&=0x00;// On arrete le module 0 du PCA 0
+  31   1        RTC_5ms=0;
+  32   1      }
+  33          
+  34          void ISR_Timer2(void) interrupt 5
+  35          {
+  36   1        long int valeur_intensite;
+  37   1        // Compte le nombre d'incréments de RTC_5ms et réalise une RTC
+  38   1        RTC_5ms++;
+  39   1        
+  40   1        if(cpt_cycles<L_Nbr) // Tant qu'on est inférieur au nombre de cycles
+  41   1        {
+  42   2          if(etat_LED==0) // Quand la LED est éteinte
+  43   2          {
+  44   3            if(RTC_5ms==20*L_OFF) //RTC_5ms compare avec une durée en dixieme de seconde (100 ms) -> Facteur 20 !
+  45   3            {
+  46   4              etat_LED=1; // On allume la LED
+  47   4              PCA0CPM1=0xC2;// On lance le module 0 du PCA0 avec la bonne intensite
+  48   4              valeur_intensite=(100-Int)*65536/100;
+  49   4              PCA0CPH1 = valeur_intensite>>8;
+  50   4              RTC_5ms=0; // On remet le compteur à 0 pour le comptage de l'état haut
+  51   4            }
+  52   3          }
+  53   2          else
+  54   2          {
+  55   3            if(RTC_5ms==20*L_ON) //RTC_5ms compare avec une durée en dixieme de seconde (100 ms) -> Facteur 20 !
+C51 COMPILER V9.52.0.0   LUMIERE                                                           05/18/2017 17:23:31 PAGE 2   
+
+  56   3            {
+  57   4              etat_LED=0; // On éteint la LED
+  58   4              PCA0CPM1&=0x00;// On arrete le module 0 du PCA 0
+  59   4              RTC_5ms=0; // On remet le compteur à 0 pour le comptage de l'état bas
+  60   4              cpt_cycles++; // On compte un cycle
+  61   4            }
+  62   3            
+  63   3          }
+  64   2        }
+  65   1        else
+  66   1        {
+  67   2          // On arrete le Timer, on atteint le bon nombre de cycles
+  68   2          TR2=0;
+  69   2          ET2=0; 
+  70   2        }
+  71   1        
+  72   1        TF2=0;
+  73   1      
+  74   1      }
+  75          
+  76          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    330    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     14       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

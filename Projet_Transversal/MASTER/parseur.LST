@@ -1,0 +1,915 @@
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE PARSEUR
+OBJECT MODULE PLACED IN parseur.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE parseur.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          //------------------------------------------------------------------------------------
+   2          // Decodage_AR.c
+   3          //------------------------------------------------------------------------------------
+   4          
+   5          // Target: C8051F02x
+   6          //
+   7          // Tool chain: KEIL PK51
+   8          //
+   9          //OBJECTIF: Decodage des commandes de la centrale de commande
+  10          //------------------------------------------------------------------------------------
+  11          // Includes
+  12          //------------------------------------------------------------------------------------            
+  13          #include <c8051f020.h>   
+  14          #include "parseur.h"  
+  15          //------------------------------------------------------------------------------------
+  16          // parseur.c
+  17          //------------------------------------------------------------------------------------
+  18          //
+  19          // AUTH: Groupe C4
+  20          // Date: 04/04/17
+  21          // Target: C8051F02x
+  22          //
+  23          // Tool chain: KEIL PK51
+  24          //
+  25          //OBJECTIF: Decodage des commandes de la centrale de commande
+  26          //------------------------------------------------------------------------------------
+  27          // Includes
+  28          //------------------------------------------------------------------------------------
+  29                           // SFR declarations
+  30          #include "Declarations_GPIO_BSE.h"
+  31          #include <intrins.h>
+  32          #include <stdio.h>
+  33          #include <stdlib.h>
+  34          #include <string.h>
+  35          #include "Putchar_Getchar.h"
+  36          #include "CMD_Servomoteur.h"
+  37          #include "Detec_Obstacle.h"
+  38          #include "CFG_Timer1.h"
+  39          #include "SPI_Master.h"
+  40          #include "detection.h"
+  41          #include "bsscanf.h"
+  42          #include "EncodageM2.h"
+  43          //------------------------------------------------------------------------------------
+  44          // Global Constants
+  45          //------------------------------------------------------------------------------------
+  46          char buffer[100];
+  47          char taille=0;
+  48          char encours=0;
+  49          unsigned char vitesseDefaut = 20;
+  50          struct COMMANDES Struct_commandes;
+  51          struct INFORMATIONS Struct_info;
+  52          int X =0,Y=0, Z=0, Angle=0;
+  53          //------------------------------------------------------------------------------------
+  54          // Function PROTOTYPES
+  55          //------------------------------------------------------------------------------------
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 2   
+
+  56          void init_struct(void)
+  57          {
+  58   1          Struct_commandes.Etat_Mouvement=Mouvement_non;
+  59   1          Struct_commandes.Etat_ACQ_Son=ACQ_non;
+  60   1          Struct_commandes.Etat_DCT_Obst=DCT_non;
+  61   1          Struct_commandes.Etat_Lumiere=Lumiere_non;
+  62   1          Struct_commandes.Etat_Servo=Servo_non;
+  63   1          Struct_commandes.Etat_Energie=Energie_non;
+  64   1          Struct_commandes.Etat_Position=Position_non;
+  65   1          Struct_commandes.Etat_Photo=Photo_non;
+  66   1        return;
+  67   1      }
+  68          
+  69          
+  70          void reception_commande(void)
+  71          {
+  72   1        char carac;
+  73   1        char i=0;
+  74   1        taille=0;
+  75   1        do {
+  76   2          carac = Getchar(0);
+  77   2          *(buffer+i) = carac;
+  78   2          i++;
+  79   2          taille++;
+  80   2        } while(carac != '\r'); // tant que la fin de la commande n'est pas arrivée
+  81   1        
+  82   1        *(buffer+i) = '\0';
+  83   1         actionCommande();
+  84   1      }
+  85          
+  86          void actionCommande(void)
+  87          { 
+  88   1        char i=0;
+  89   1        if(taille>0)
+  90   1          {
+  91   2            switch(buffer[0]){        
+  92   3              case 'D': // D: Debut epreuve
+  93   3                debut_epreuve();
+  94   3                retour(1);
+  95   3                break;
+  96   3              
+  97   3              case 'Q': // Q: Arret d'urgence
+  98   3                arret_urgence();
+  99   3                break;
+ 100   3              
+ 101   3              case 'A': // A: Avancer
+ 102   3                if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 103   3                {
+ 104   4                  avancer();
+ 105   4                }
+ 106   3                else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 107   3                break;
+ 108   3                
+ 109   3              case 'B':
+ 110   3                if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 111   3                {
+ 112   4                  reculer();
+ 113   4                }
+ 114   3                else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 115   3                break;
+ 116   3              
+ 117   3              case 'E':// E: Fin de l epreuve 
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 3   
+
+ 118   3                if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 119   3                {
+ 120   4                  fin_epreuve();
+ 121   4                  retour(1);
+ 122   4                }
+ 123   3                else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 124   3                break;
+ 125   3                       
+ 126   3              case 'T'://TV: Reglage vitesse de deplacement
+ 127   3                  if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 128   3                  {
+ 129   4                    int vit=0;
+ 130   4                    sscanf(buffer, "TV %u\r", &vit);
+ 131   4                    if (vit<5 || vit>100)
+ 132   4                    {
+ 133   5                      Send_String(0,"La valeur de vitesse de déplacement n'est pas comprise entre 5 et 100");
+ 134   5                      retour(0);
+ 135   5                      break;
+ 136   5                    }
+ 137   4                    else
+ 138   4                    {
+ 139   5                      sscanf(buffer, "TV %u\r", &vitesseDefaut);
+ 140   5                    }     
+ 141   4                    retour(1);
+ 142   4                  }
+ 143   3                  else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 144   3                  break;
+ 145   3                         
+ 146   3              case 'S': // S: STOP: Fin des commandes de déplacement A et B de la base roulante
+ 147   3                if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 148   3                {
+ 149   4                  stop();
+ 150   4                  retour(1);
+ 151   4                }
+ 152   3                else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 153   3                break;
+ 154   3      
+ 155   3              case 'R': //commandes commençant par R  
+ 156   3                if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 157   3                {
+ 158   4                  switch(buffer[1]){          
+ 159   5                    case 'D': // RD: Rotation droite
+ 160   5                      rotation_90droite();
+ 161   5                      retour(1);
+ 162   5                      break;
+ 163   5                      
+ 164   5                    case 'G': // RG: Rotation gauche
+ 165   5                      rotation_90gauche();
+ 166   5                      retour(1);
+ 167   5                      break;
+ 168   5                      
+ 169   5                    case 'C': // RC [D/G]: rotation complete de 180° par la droite (par défau) ou par la gauche 
+ 170   5                      if(taille == 5) //si y a parametre
+ 171   5                      {
+ 172   6                        if(buffer[3]=='D')// si parametre est D=0x44
+ 173   6                        {
+ 174   7                        rotation_180droite();
+ 175   7                        }
+ 176   6                        else if(buffer[3]=='G')// si parametre est G=0x47
+ 177   6                        {
+ 178   7                        rotation_180gauche();
+ 179   7                        }             
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 4   
+
+ 180   6                      }
+ 181   5                      else if(taille==3) //si pas de parametre
+ 182   5                      {
+ 183   6                        rotation_180droite();
+ 184   6                      }
+ 185   5                      retour(1);
+ 186   5                      break;
+ 187   5                    
+ 188   5                    case 'A': //RA [D/G]:[0-180] :rotation de la base roulante d'un angle donné
+ 189   5                      rotation_RA();
+ 190   5                      retour(1);
+ 191   5                      break;
+ 192   5                      
+ 193   5                    default:
+ 194   5                      retour(0);
+ 195   5                  }
+ 196   4                }
+ 197   3                else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 198   3                break;
+ 199   3              
+ 200   3              case 'G': // G X:x Y:y A:angle : Deplacement de la base roulante avec coordonées
+ 201   3                                  // x et y ? [-99;99] et angle ? [-180;180]
+ 202   3                          if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 203   3                          {
+ 204   4                              deplacement_coord();
+ 205   4                              
+ 206   4                            //depl_coord_obs();
+ 207   4                            //Send_String(0,"B");
+ 208   4                            retour(1);
+ 209   4                          }
+ 210   3                          else{
+ 211   4                          Send_String(0,"Pas d'epreuve selectionnee");
+ 212   4                          retour(0);
+ 213   4                          }
+ 214   3                          retour(1);
+ 215   3                          break;
+ 216   3                
+ 217   3              case 'C': // CS [H/V] [A:Angle]: Pilotage du servomoteur
+ 218   3                if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 219   3                {
+ 220   4                  servomoteur();
+ 221   4                }
+ 222   3                else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 223   3                break;
+ 224   3              
+ 225   3              case 'M':
+ 226   3                  if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 227   3                  {
+ 228   4                    MOB();
+ 229   4                    retour(1);
+ 230   4                  }
+ 231   3                  else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+ 232   3                  break;
+ 233   3                  
+ 234   3              case 'L': 
+ 235   3                
+ 236   3                  if(Struct_commandes.Etat_Epreuve>=1 && Struct_commandes.Etat_Epreuve<=8)
+ 237   3                    {
+ 238   4                      lumiere();
+ 239   4                      retour(1);
+ 240   4                    }
+ 241   3                  else{Send_String(0,"Pas d'epreuve selectionnee"); retour(0);}
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 5   
+
+ 242   3                  
+ 243   3                  break;
+ 244   3                  
+ 245   3              case 'N':
+ 246   3                detect();
+ 247   3              retour(1);
+ 248   3              break;
+ 249   3              
+ 250   3              default:
+ 251   3                retour(0);
+ 252   3              
+ 253   3              
+ 254   3            }
+ 255   2            
+ 256   2            for(i=0;i<100;i++)
+ 257   2            { 
+ 258   3              buffer[i]=0x0d;
+ 259   3            }
+ 260   2          }
+ 261   1      }
+ 262          
+ 263          void debut_epreuve()
+ 264          {
+ 265   1        char msg[20]="Invite de commande ";
+ 266   1        int c_variable;
+ 267   1        int numEpreuve=0;
+ 268   1        sscanf(buffer,"D %d", &numEpreuve);
+ 269   1        Struct_commandes.Etat_Epreuve=numEpreuve;
+ 270   1        
+ 271   1        Struct_info.Etat_Invite=Invite_oui;
+ 272   1        Struct_info.MSG_Invit=msg;
+ 273   1        Struct_info.Tab_Val_Obst=&c_variable;
+ 274   1        Send_String(0,Struct_info.MSG_Invit);
+ 275   1        
+ 276   1        sprintf(msg, "%d", (int)Struct_commandes.Etat_Epreuve);
+ 277   1        Send_String(0, msg);
+ 278   1        return;
+ 279   1      }
+ 280          
+ 281          void avancer()
+ 282          {
+ 283   1      
+ 284   1        int vitesse  = 0;   // par défaut 
+ 285   1      
+ 286   1        Struct_commandes.Etat_Mouvement=Avancer;
+ 287   1        sscanf(buffer, "A %d\r", &vitesse);
+ 288   1        
+ 289   1        
+ 290   1        if (vitesse>=0 && vitesse <=100)
+ 291   1        {
+ 292   2          if (vitesse < 5)
+ 293   2          {
+ 294   3            Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 295   3          }   
+ 296   2          else
+ 297   2          {
+ 298   3            Struct_commandes.Vitesse = (unsigned char)vitesse;
+ 299   3          }
+ 300   2          mouvement(Struct_commandes);
+ 301   2          retour(1);
+ 302   2        }
+ 303   1        else
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 6   
+
+ 304   1        {
+ 305   2          retour(0);
+ 306   2        }
+ 307   1        
+ 308   1        
+ 309   1        return;
+ 310   1      }
+ 311          
+ 312          void reculer()
+ 313          {
+ 314   1        int vitesse=0;  // par défaut 
+ 315   1      
+ 316   1        Struct_commandes.Etat_Mouvement=Reculer;
+ 317   1        sscanf(buffer, "B %d\r", &vitesse);
+ 318   1        if (vitesse>=0 && vitesse <=100)
+ 319   1        {
+ 320   2          if (vitesse < 5)
+ 321   2          {
+ 322   3            Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 323   3          }
+ 324   2          else
+ 325   2          {
+ 326   3            Struct_commandes.Vitesse = (unsigned char)vitesse;
+ 327   3          }
+ 328   2          mouvement(Struct_commandes);
+ 329   2          retour(1);
+ 330   2        }
+ 331   1        else
+ 332   1        {
+ 333   2          retour(0);
+ 334   2        }
+ 335   1        
+ 336   1        
+ 337   1        return;
+ 338   1      }
+ 339          
+ 340          void arret_urgence()
+ 341          {
+ 342   1      
+ 343   1        stop();
+ 344   1        RSTSRC=0x10;
+ 345   1        return;
+ 346   1      }
+ 347          
+ 348          void fin_epreuve()
+ 349          {
+ 350   1          Struct_commandes.Etat_Epreuve=Fin_Epreuve;
+ 351   1          Struct_info.Etat_Invite=Invite_non;
+ 352   1          Send_String(0,"Fin epreuve");
+ 353   1          return;
+ 354   1      }
+ 355           
+ 356          void stop()
+ 357          {
+ 358   1          Struct_commandes.Etat_Mouvement=Stopper;
+ 359   1          mouvement(Struct_commandes);
+ 360   1          return;
+ 361   1      }
+ 362          
+ 363          void retour(char correct)
+ 364          {
+ 365   1        if(correct==0)          //envoi du message de retour en fonction de la compréhension ou non de la commande
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 7   
+
+ 366   1        {
+ 367   2          Putchar(0,0x0d);
+ 368   2          Putchar(0,0x0a);
+ 369   2          Putchar(0,0x23);
+ 370   2        }
+ 371   1        else
+ 372   1        {
+ 373   2          Putchar(0,0x0d);
+ 374   2          Putchar(0,0x0a);
+ 375   2          Putchar(0,0x3e);
+ 376   2        }
+ 377   1        return;
+ 378   1      }
+ 379          
+ 380          void rotation_90droite()
+ 381          {
+ 382   1        Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 383   1        Struct_commandes.Etat_Mouvement=Rot_90D;
+ 384   1        mouvement(Struct_commandes);
+ 385   1        return;
+ 386   1      }
+ 387          void rotation_90gauche()
+ 388          {
+ 389   1        Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 390   1        Struct_commandes.Etat_Mouvement=Rot_90G;
+ 391   1        mouvement(Struct_commandes);
+ 392   1        return;
+ 393   1      }
+ 394          
+ 395          void rotation_180droite()
+ 396          {
+ 397   1        Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 398   1        Struct_commandes.Etat_Mouvement=Rot_180D;
+ 399   1        mouvement(Struct_commandes);
+ 400   1        return;
+ 401   1      }
+ 402          void rotation_180gauche()
+ 403          {
+ 404   1        Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 405   1        Struct_commandes.Etat_Mouvement=Rot_180G;
+ 406   1        mouvement(Struct_commandes);
+ 407   1        return;
+ 408   1      }
+ 409          
+ 410          void rotation_RA()
+ 411          {
+ 412   1        void * tab[40];
+ 413   1        int angle = 0;
+ 414   1      
+ 415   1        char GD = 'a';
+ 416   1        tab[0]=(void*)&GD;
+ 417   1        tab[1]=(void*)&angle;
+ 418   1        sscanf(buffer, "RA %c:%d", &GD, &angle);
+ 419   1        Struct_commandes.Vitesse = (unsigned char)vitesseDefaut;
+ 420   1        if (GD=='G')
+ 421   1          Struct_commandes.Etat_Mouvement=Rot_AngG;
+ 422   1        else
+ 423   1          Struct_commandes.Etat_Mouvement=Rot_AngD;
+ 424   1      
+ 425   1        Struct_commandes.Angle=angle; 
+ 426   1      
+ 427   1        mouvement(Struct_commandes);
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 8   
+
+ 428   1        return;
+ 429   1      }
+ 430          
+ 431          void servomoteur()
+ 432          {
+ 433   1        char HV='B';
+ 434   1        int angle=-90;
+ 435   1        char chaineCar[10];
+ 436   1        int i=0, temps_estime;  // pour attendre
+ 437   1        
+ 438   1        sscanf(buffer, "CS %c A:%d\n",&HV, &angle);
+ 439   1          //sscanf(buffer, "C%d", &angle);
+ 440   1        Struct_commandes.Servo_Angle = angle; 
+ 441   1        if (HV=='H')
+ 442   1          temps_estime=CMD_Servo_H(Struct_commandes.Servo_Angle);
+ 443   1             
+ 444   1        if(HV=='V')
+ 445   1          {
+ 446   2          envoi_trame(buffer,taille);
+ 447   2              
+ 448   2          //temps_estime=CMD_Servo_V(Struct_commandes.Servo_Angle);
+ 449   2          }
+ 450   1          
+ 451   1        else
+ 452   1        {
+ 453   2          Send_String(0,"Probleme etat_servo");
+ 454   2          return;
+ 455   2        }
+ 456   1        
+ 457   1          //char angle=-90;
+ 458   1      
+ 459   1        for (i=0; i<(16*temps_estime*10000);i++)
+ 460   1        {
+ 461   2          _nop_();
+ 462   2        }
+ 463   1        retour();
+*** WARNING C209 IN LINE 463 OF parseur.c: '_retour': too few actual parameters
+ 464   1        sprintf(chaineCar,"AS %c", HV);
+ 465   1        Send_String(0,chaineCar);
+ 466   1          retour();
+*** WARNING C209 IN LINE 466 OF parseur.c: '_retour': too few actual parameters
+ 467   1        return;
+ 468   1      }
+ 469          
+ 470          void MOB(void)
+ 471          {
+ 472   1        int reso_angle = 30;
+ 473   1        char D='0';
+ 474   1        sscanf(buffer, "MOB %c A:%d", &D, &reso_angle);
+ 475   1        if (D=='D')
+ 476   1        {
+ 477   2          Struct_commandes.Etat_DCT_Obst = oui_180;
+ 478   2        }
+ 479   1        else
+ 480   1        {
+ 481   2          sscanf(buffer, "MOB A:%d", &reso_angle);
+ 482   2          Struct_commandes.Etat_DCT_Obst = oui_360;
+ 483   2        }
+ 484   1        
+ 485   1        Struct_commandes.DCT_Obst_Resolution = reso_angle;
+ 486   1      
+ 487   1        Struct_info = detection_obstacles(Struct_info,Struct_commandes);
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 9   
+
+ 488   1        
+ 489   1        resultat_obstacles();
+ 490   1      }
+ 491          
+ 492          void detect(void) 
+ 493          {
+ 494   1        char test[40];
+ 495   1        unsigned int Distance_AV=MES_Dist_AV ();
+ 496   1        sprintf(test, "Distance : %d\n", Distance_AV);
+ 497   1        
+ 498   1        Send_String(0, test);
+ 499   1      }
+ 500          
+ 501          void resultat_obstacles(void)
+ 502          {
+ 503   1        char resultat[720];
+ 504   1        int pas = Struct_commandes.DCT_Obst_Resolution;
+ 505   1        int i = 0;
+ 506   1        int angle=0;
+ 507   1        int val=0;
+ 508   1        
+ 509   1        sprintf(resultat, "%s", "KOB");
+ 510   1        
+ 511   1        if (Struct_commandes.Etat_DCT_Obst == oui_180)
+ 512   1        {
+ 513   2          angle=-90;
+ 514   2          for (i=0; i<Struct_info.Nbre_Val_obst; i++)
+ 515   2          {
+ 516   3            sprintf(resultat, "%s %d:%u", resultat, angle+i*pas, *(Struct_info.Tab_Val_Obst+i));
+ 517   3          }
+ 518   2        }
+ 519   1        else if (Struct_commandes.Etat_DCT_Obst == oui_360)
+ 520   1        {
+ 521   2          angle=90;
+ 522   2          while(val>=-180)
+ 523   2          {
+ 524   3            val=angle-pas;
+ 525   3            if(val>=-180)
+ 526   3              angle=val;
+ 527   3          }
+ 528   2          for (i=0; i<Struct_info.Nbre_Val_obst; i++)
+ 529   2          {
+ 530   3            if(angle+i*pas<=180)
+ 531   3              sprintf(resultat, "%s %d:%u", resultat, angle+i*pas, *(Struct_info.Tab_Val_Obst+i));
+ 532   3          }
+ 533   2        }
+ 534   1        sprintf(resultat, "%s \n", resultat);
+ 535   1        
+ 536   1        Send_String(0, resultat);
+ 537   1      }
+ 538          
+ 539          void deplacement_coord()
+ 540          {
+ 541   1          int X =0,Y=0,Angle=0;
+ 542   1          sscanf(buffer, "G X:%d Y:%d A:%d", &X,&Y, &Angle);
+ 543   1          //on avance ou recule
+ 544   1          if(Y >0) 
+ 545   1          {
+ 546   2              Struct_commandes.Coord_X=Y;
+ 547   2              Struct_commandes.Etat_Mouvement = Depl_Coord;
+ 548   2              mouvement(Struct_commandes);
+ 549   2          }
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 10  
+
+ 550   1          else if(Y<0)
+ 551   1          {
+ 552   2            
+ 553   2              Angle=Angle+180;
+ 554   2              Struct_commandes.Etat_Mouvement = Rot_180D;   
+ 555   2              mouvement(Struct_commandes);
+ 556   2            
+ 557   2              pids();
+ 558   2            
+ 559   2              Struct_commandes.Coord_X=-Y;
+ 560   2              Struct_commandes.Etat_Mouvement = Depl_Coord;   
+ 561   2              mouvement(Struct_commandes);
+ 562   2          }
+ 563   1           
+ 564   1          //On attend la fin de déplacement
+ 565   1          pids();
+ 566   1           
+ 567   1          //on fait une rotation droite ou gauche
+ 568   1          if(X >0)
+ 569   1          {
+ 570   2              Angle=Angle+90;
+ 571   2              Struct_commandes.Etat_Mouvement = Rot_90D;
+ 572   2              mouvement(Struct_commandes);
+ 573   2          }
+ 574   1          else if(X<0)
+ 575   1          {
+ 576   2              Angle=Angle-90;
+ 577   2              X=-X;
+ 578   2              Struct_commandes.Etat_Mouvement = Rot_90G;  
+ 579   2              mouvement(Struct_commandes);
+ 580   2          }
+ 581   1           
+ 582   1          //On attend la fin de rotation
+ 583   1          pids();
+ 584   1           
+ 585   1          //on avance si nécessaire
+ 586   1          if(X!=0)
+ 587   1          {
+ 588   2              Struct_commandes.Coord_X=X;
+ 589   2              Struct_commandes.Etat_Mouvement = Depl_Coord;
+ 590   2              mouvement(Struct_commandes);
+ 591   2          }
+ 592   1           
+ 593   1          //On attend la fin de déplacement
+ 594   1          pids();
+ 595   1           
+ 596   1          //on fait une rotation droite ou gauche d'un angle donné
+ 597   1          if(Angle<0)
+ 598   1          {
+ 599   2              Angle=-Angle;
+ 600   2              Struct_commandes.Angle=Angle;
+ 601   2              Struct_commandes.Etat_Mouvement = Rot_AngD; 
+ 602   2              mouvement(Struct_commandes);
+ 603   2          }
+ 604   1          else if(Angle>0)
+ 605   1          {
+ 606   2              Struct_commandes.Angle=Angle;
+ 607   2              Struct_commandes.Etat_Mouvement = Rot_AngG;
+ 608   2              mouvement(Struct_commandes);    
+ 609   2          }
+ 610   1           
+ 611   1          //On attend la fin de rotation
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 11  
+
+ 612   1          pids();
+ 613   1          
+ 614   1          //Struct_info.Etat_BUT_Mouvement=BUT_Atteint_oui;
+ 615   1          Send_String(0,"B\n");
+ 616   1           
+ 617   1      }
+ 618          
+ 619          void depl_coord_obs (void)
+ 620          {
+ 621   1        int Xobs=0,Yobs=0;
+ 622   1        int dist_detec=10; //en dm
+ 623   1        int dist_secu=2.5; // en dm
+ 624   1        int reso_angle=30;
+ 625   1        
+ 626   1        char test[40];
+ 627   1        
+ 628   1        X=0,Y=0,Z=0,Angle=0;
+ 629   1        
+ 630   1        
+ 631   1        sscanf(buffer, "G X:%d Y:%d A:%d", &X,&Y, &Angle);
+ 632   1        Send_String(0,"DEBUT\n");
+ 633   1        while(X!=0 || Y!=0)
+ 634   1          
+ 635   1          {
+ 636   2                  
+ 637   2            if(Y<0) //si Y<0 on fait un demi-tour
+ 638   2            { 
+ 639   3              //Send_String(0,"0\n");
+ 640   3              Y=-Y; 
+ 641   3              X=-X;
+ 642   3              Angle=Angle+180;
+ 643   3              Struct_commandes.Etat_Mouvement = Rot_180D;   
+ 644   3              mouvement(Struct_commandes);    
+ 645   3              pids();
+ 646   3            }
+ 647   2            
+ 648   2            //Detection des Obstacles:
+ 649   2            Struct_commandes.Etat_DCT_Obst = oui_180;
+ 650   2            Struct_commandes.DCT_Obst_Resolution = reso_angle;
+ 651   2            Struct_info = detection_obstacles(Struct_info,Struct_commandes);
+ 652   2             
+ 653   2            Yobs=*(Struct_info.Tab_Val_Obst+3)*0.1;
+ 654   2            sprintf(test,"Capteur 1 : %d\n",*(Struct_info.Tab_Val_Obst+2));
+ 655   2            Send_String(0,test);
+ 656   2            sprintf(test,"Capteur 2 : %d\n",*(Struct_info.Tab_Val_Obst+3));
+ 657   2            Send_String(0,test);
+ 658   2            sprintf(test,"Capteur 3 : %d\n",*(Struct_info.Tab_Val_Obst+4));
+ 659   2            Send_String(0,test);
+ 660   2            
+ 661   2            
+ 662   2            
+ 663   2            
+ 664   2            //gestion des déplacements
+ 665   2      
+ 666   2            if(*(Struct_info.Tab_Val_Obst+3)>(dist_detec*10)) //MES_Dist_AV()
+ 667   2            {
+ 668   3              Send_String(0,"obs>1m\n");
+ 669   3              if(Y>=dist_detec) //si Y superieur ou  égale à la distance de détection maximale du capteur, On deplac
+             -e le robot de la distance maximale de detection
+ 670   3              { 
+ 671   4                Send_String(0,"Y>1m\n");
+ 672   4                Struct_commandes.Coord_X=dist_detec;
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 12  
+
+ 673   4                Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 674   4                Y=Y-dist_detec;
+ 675   4                mouvement(Struct_commandes);
+ 676   4                pids();
+ 677   4                
+ 678   4                
+ 679   4              }
+ 680   3              else        // si Y est inférieur à la distance de détection maximale du capteur, on deplace le robot de l
+             -a distance Y, puis on tourne si nécessaire
+ 681   3              {
+ 682   4                Send_String(0,"y<1m\n");
+ 683   4                Struct_commandes.Coord_X=/*(unsigned char)*/Y;
+ 684   4                Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 685   4                Y=0;
+ 686   4                mouvement(Struct_commandes);
+ 687   4                pids();
+ 688   4                choix_rotation(); //on tourne
+ 689   4                        
+ 690   4              }
+ 691   3            }
+ 692   2            else
+ 693   2            {
+ 694   3              Send_String(0,"obs<1m\n");
+ 695   3              if ( Y>=(Yobs))//-dist_secu) ) //si Y (le point d'arrivée) est derriere l'obstacle, on avance jusqu'a 
+             -l'obstacle, puis on tourne si nécessaire
+ 696   3              {
+ 697   4                Send_String(0,"algo evitement\n");
+ 698   4                if(X==0)
+ 699   4                {
+ 700   5                  Send_String(0,"3\n");
+ 701   5                  Yobs=Yobs-dist_secu;
+ 702   5                  Struct_commandes.Coord_X=Yobs;
+ 703   5                  Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 704   5                  Y=Y-Yobs;
+ 705   5                  mouvement(Struct_commandes);
+ 706   5                  pids();
+ 707   5                
+ 708   5                  Angle=Angle+90;
+ 709   5                  Struct_commandes.Etat_Mouvement=Rot_90D;
+ 710   5                  mouvement(Struct_commandes);
+ 711   5                  pids();     
+ 712   5                  Z=X; // on switch X et Y car on a tourné et qu'on fait les if uniquement sur Y (lorsqu'on avance)
+ 713   5                  X=-Y;
+ 714   5                  Y=Z;
+ 715   5                  
+ 716   5                  Struct_commandes.Coord_X=4;
+ 717   5                  Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 718   5                  mouvement(Struct_commandes);
+ 719   5                  pids();
+ 720   5                  
+ 721   5                  
+ 722   5                  Angle=Angle-90;
+ 723   5                  Struct_commandes.Etat_Mouvement=Rot_90G;
+ 724   5                  mouvement(Struct_commandes);
+ 725   5                  pids();
+ 726   5                  Z=X;
+ 727   5                  X=Y;
+ 728   5                  Y=-Z;
+ 729   5                              
+ 730   5                    
+ 731   5                  Struct_commandes.Coord_X=8;
+ 732   5                  Struct_commandes.Etat_Mouvement=Depl_Coord;
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 13  
+
+ 733   5                  Y=Y-8;
+ 734   5                  mouvement(Struct_commandes);
+ 735   5                  pids();
+ 736   5                  
+ 737   5                  Angle=Angle-90;
+ 738   5                  Struct_commandes.Etat_Mouvement=Rot_90G;
+ 739   5                  mouvement(Struct_commandes);
+ 740   5                  pids();
+ 741   5                  Z=X;
+ 742   5                  X=Y;
+ 743   5                  Y=-Z;
+ 744   5                          
+ 745   5                  Struct_commandes.Coord_X=4;
+ 746   5                  Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 747   5                  mouvement(Struct_commandes);
+ 748   5                  pids();
+ 749   5                  
+ 750   5                  Angle=Angle+90;
+ 751   5                  Struct_commandes.Etat_Mouvement=Rot_90D;
+ 752   5                  mouvement(Struct_commandes);
+ 753   5                  pids();     
+ 754   5                  Z=X; // on switch X et Y car on a tourné et qu'on fait les if uniquement sur Y (lorsqu'on avance)
+ 755   5                  X=-Y;
+ 756   5                  Y=Z;
+ 757   5                  
+ 758   5                  
+ 759   5                  
+ 760   5                }
+ 761   4                else
+ 762   4                {
+ 763   5                  //Send_String(0,"3bis\n");
+ 764   5                  Yobs=Yobs-dist_secu;
+ 765   5                  Struct_commandes.Coord_X=Yobs;
+ 766   5                  
+ 767   5                
+ 768   5                  Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 769   5                  Y=Y-Yobs;
+ 770   5                  mouvement(Struct_commandes);
+ 771   5                  pids();
+ 772   5                
+ 773   5                  choix_rotation(); //on tourne
+ 774   5                }
+ 775   4                
+ 776   4              }
+ 777   3              else   //si Y (le point d'arrivée) est devant l'obstacle, on avance puis on tourne si nécessaire
+ 778   3              {
+ 779   4                Send_String(0,"pas evitement\n");
+ 780   4                //Send_String(0,"4\n");
+ 781   4                Struct_commandes.Coord_X=Y;
+ 782   4                Struct_commandes.Etat_Mouvement=Depl_Coord;
+ 783   4                Y=0;
+ 784   4                mouvement(Struct_commandes);
+ 785   4                pids();
+ 786   4                choix_rotation(); //on tourne
+ 787   4      
+ 788   4              }
+ 789   3            }     
+ 790   2          }
+ 791   1          
+ 792   1          choix_rotation();
+ 793   1          Send_String(0,"B\n");
+ 794   1      }
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 14  
+
+ 795          
+ 796          void choix_rotation()
+ 797          {
+ 798   1        Send_String(0,"DEBUT ROTATION\n");
+ 799   1        if(X>0)         //si X>0 on tourne 90D
+ 800   1        {
+ 801   2          //Send_String(0,"5\n");
+ 802   2          Angle=Angle+90;
+ 803   2          Struct_commandes.Etat_Mouvement=Rot_90D;
+ 804   2          mouvement(Struct_commandes);
+ 805   2          pids();
+ 806   2          
+ 807   2          
+ 808   2          Z=X; // on switch X et Y car on a tourné et qu'on fait les if uniquement sur Y (lorsqu'on avance)
+ 809   2          X=-Y;
+ 810   2          Y=Z;
+ 811   2        }
+ 812   1        else if(X<0)   //si X<0 on tourne 90G
+ 813   1        {
+ 814   2          //Send_String(0,"6\n");
+ 815   2          Angle=Angle-90;
+ 816   2          Struct_commandes.Etat_Mouvement=Rot_90G;
+ 817   2          mouvement(Struct_commandes);
+ 818   2          pids();
+ 819   2          Z=X;
+ 820   2          X=Y;
+ 821   2          Y=-Z;
+ 822   2        }
+ 823   1        else if(X==0) // si X=0 on met le robot à l'angle demandé en commande
+ 824   1        {
+ 825   2          //Send_String(0,"7\n");
+ 826   2          if(Angle>0)
+ 827   2          {
+ 828   3          Struct_commandes.Angle=Angle;
+ 829   3          Struct_commandes.Etat_Mouvement=Rot_AngG;
+ 830   3          mouvement(Struct_commandes);
+ 831   3          pids();     
+ 832   3              Angle=0;
+ 833   3          }
+ 834   2          else if(Angle<0)
+ 835   2          {
+ 836   3          Angle=-Angle;
+ 837   3          Struct_commandes.Angle=Angle;
+ 838   3          Struct_commandes.Etat_Mouvement=Rot_AngD;
+ 839   3          mouvement(Struct_commandes);
+ 840   3          pids(); 
+ 841   3            Angle=0;
+ 842   3          }
+ 843   2        }
+ 844   1      }
+ 845          
+ 846          void lumiere()
+ 847          {
+ 848   1          char Int=0;
+ 849   1          char L_ON=0;
+ 850   1          char L_OFF=0;
+ 851   1          char L_Nbr=0;
+ 852   1          
+ 853   1          
+ 854   1          sscanf(buffer, "L I:%d D:%d E:%d N:%d",&Int, &L_ON, &L_OFF, &L_Nbr);
+ 855   1          
+ 856   1          envoi_trame(buffer,taille);
+C51 COMPILER V9.52.0.0   PARSEUR                                                           05/18/2017 17:38:56 PAGE 15  
+
+ 857   1          retour();
+*** WARNING C209 IN LINE 857 OF parseur.c: '_retour': too few actual parameters
+ 858   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   4971    ----
+   CONSTANT SIZE    =    435    ----
+   XDATA SIZE       =    165    1003
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)

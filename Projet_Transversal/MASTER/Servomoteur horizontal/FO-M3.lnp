@@ -1,0 +1,7 @@
+"STARTUP.obj",
+"CMD_Servomoteur.obj",
+"main.obj",
+"LIB_BSE_UART.obj",
+"CFG_Globale.obj" 
+TO "FO-M3" 
+RAMSIZE(256) 

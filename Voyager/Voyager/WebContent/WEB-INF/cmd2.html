@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+ <script src="https://d10ajoocuyu32n.cloudfront.net/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="js/Canvas.js"></script>
+
+<script type="text/javascript" src="js/test.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link href="css/cmd2.css" rel="stylesheet">
+
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+<script src="bootstrap/js/bootstrap-toggle.min.js"></script>
+<link href="bootstrap/css/bootstrap-toggle.min.css" rel="stylesheet">
+
+<title>COMMANDE</title>
+</head>
+
+<header>
+</header>
+
+<body>
+	<!DOCTYPE html>
+<html>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-3">
+        	<fieldset>
+				<legend> Boutons </legend>
+				<ul>
+					<a href="javascript:position_robot()"
+						title="Position_Robot"> <input checked data-toggle="toggle" type="checkbox">
+					</a>
+						<p id="text_display">Position du Robot</p>
+					<a href="javascript:parcours_robot()"
+						title="Parcours_Robot"> <input checked data-toggle="toggle" type="checkbox">
+					</a>
+						<p id="text_display">Parcours du Robot</p>
+
+					<a href="javascript:position_mur()" title="Position_Mur">
+							<input checked data-toggle="toggle" type="checkbox">
+					</a>
+						<p id="text_display">Position des Murs</p>
+				
+
+			
+			<a href="javascript:navigation_automatique()"
+					title="Navigation_Automatique"> <input checked data-toggle="toggle" type="checkbox">
+				</a>
+			<p id="text_display">Navigation Automatique</p>
+			</ul>
+			</fieldset>
+		</div>
+        <div class="col-lg-6">
+        	<canvas id="Grille" width="500" height="300" style="z-index: 1"></canvas>
+			<canvas id="Robot" width="500" height="300" style="z-index: 2"></canvas>
+			<canvas id="Trajectoire" width="500" height="300" style="z-index: 3"></canvas>
+			<canvas id="Mur" width="500" height="300" style="z-index: 4"></canvas>
+			<script>
+				dessine_canvas();
+				dessine_robot(0,0,1);
+			</script>
+        </div>
+        <div class="col-lg-3">
+        	<div id="container"></div>
+		</div>
+      </div>
+  
+      <div class="row">
+      	<div class="col-lg-2 col-lg-offset-5">
+      	<a href="#" class="btn btn-default">UP</a>
+      	</div>
+      </div>
+      <div class="row">
+      	<div class="col-lg-2 col-lg-offset-3">
+      	<a href="#" class="btn btn-default">LEFT</a>
+      	</div>
+
+      	<div class="col-lg-2 col-lg-offset-7">
+      	<a href="#" class="btn btn-default">RIGHT</a>
+      	</div>
+      </div>
+      <div class="row">
+      	<div class="col-lg-2 col-lg-offset-5">
+      	<a href="#" class="btn btn-default">DOWN</a>
+      	</div>
+      </div>
+    </div>
+
+
+</body>
+
+<footer>
+</footer>
+
+
+</html>

@@ -1,0 +1,88 @@
+C51 COMPILER V9.52.0.0   CMD_SERVOMOTEUR                                                   05/18/2017 17:23:30 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CMD_SERVOMOTEUR
+OBJECT MODULE PLACED IN CMD_Servomoteur.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE CMD_Servomoteur.c LARGE BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          
+   2          
+   3          //-------------------------------------------------------------------------------------
+   4          // CFG_Timer0.c
+   5          // Configuration et routine d'interruption du PCA0
+   6          //-------------------------------------------------------------------------------------
+   7          // AUTH: Mior Edouard
+   8          // DATE: 02/03/2017
+   9          //
+  10          // Target: C8051F02x
+  11          // Tool chain: KEIL eval 'c'
+  12          //
+  13          // Objectifs : - Configuration du PCA 0
+  14          //             - Routine d'interruption du PCA 0
+  15          //             - Envoi d'une impulsion de largeur variable sur une sortie
+  16          // 
+  17          // Broches utilisées : P1.0, P1.1
+  18          //
+  19          //
+  20          // Documents utiles : Extraits de la Datasheet du C8051F020
+  21          
+  22          
+  23          
+  24          
+  25          //--------------------------------------------------------------------------------------------------------
+             ----
+  26          // Variables globales
+  27          //--------------------------------------------------------------------------------------------------------
+             ----
+  28           // Angle du servomoteur avant deplacement
+  29           #include "c8051F020.h"
+  30          #include "Declarations_GPIO_BSE.h"
+  31          #include "CMD_Servomoteur.h"
+  32          #include <stdio.h>
+  33          #include <math.h>
+  34           
+  35          char Angle_actuel_V=0;
+  36          
+  37          
+  38          
+  39          unsigned char CMD_Servo_V (char Angle) //pour l’axe horizontal 
+  40          {
+  41   1        long int Temps_angle, Temps_Estime;
+  42   1        
+  43   1        Temps_angle=600+(Angle+90)*10; // Temps en µs - Temps min : 600 µs - Temps max : 2400 µs
+  44   1        
+  45   1        // Calcul de la valeur de rechargement pour le PWM
+  46   1        // Duty_cycle=Temps_angle/11851 avec 11851 le temps en ms d'une période
+  47   1        // On multiplie par 100 pour le domaine du rapport cyclique
+  48   1        // On multiplie par 65536 pour passer dans la base 16-bits
+  49   1        // On divise par 100 pour avoir une valeur fidèle
+  50   1        PCA0CPH0 = ((100-(Temps_angle*100))/11851)*65536/100>>8;
+  51   1      //  PCA0CPH1 = -(65536/11851)*temps_angle*1000>>8;
+  52   1        
+  53   1        // Calcul du temps estimé pour faire la rotation
+C51 COMPILER V9.52.0.0   CMD_SERVOMOTEUR                                                   05/18/2017 17:23:30 PAGE 2   
+
+  54   1        Temps_Estime=abs(Angle_actuel_V-Angle)*21/60; // cf datasheet 
+  55   1        
+  56   1        // Redéfinition de l'angle actuel
+  57   1        Angle_actuel_V=Angle;
+  58   1        
+  59   1        return Temps_Estime;
+  60   1      }
+  61          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    174    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      1       9
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

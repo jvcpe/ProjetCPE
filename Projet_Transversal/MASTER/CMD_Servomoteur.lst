@@ -1,0 +1,152 @@
+C51 COMPILER V9.52.0.0   CMD_SERVOMOTEUR                                                   05/18/2017 17:38:56 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE CMD_SERVOMOTEUR
+OBJECT MODULE PLACED IN CMD_Servomoteur.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Servomoteur horizontal\CMD_Servomoteur.c LARGE BROWSE DEBUG OBJECTEXTEND PR
+                    -INT(.\CMD_Servomoteur.lst) TABS(2) OBJECT(CMD_Servomoteur.obj)
+
+line level    source
+
+   1          
+   2          
+   3          //-------------------------------------------------------------------------------------
+   4          // CFG_Timer0.c
+   5          // Configuration et routine d'interruption du PCA0
+   6          //-------------------------------------------------------------------------------------
+   7          // AUTH: Mior Edouard
+   8          // DATE: 02/03/2017
+   9          //
+  10          // Target: C8051F02x
+  11          // Tool chain: KEIL eval 'c'
+  12          //
+  13          // Objectifs : - Configuration du PCA 0
+  14          //             - Routine d'interruption du PCA 0
+  15          //             - Envoi d'une impulsion de largeur variable sur une sortie
+  16          // 
+  17          // Broches utilisées : P1.0, P1.1
+  18          //
+  19          //
+  20          // Documents utiles : Extraits de la Datasheet du C8051F020
+  21          
+  22          //--------------------------------------------------------------------------------------------------------
+             ----
+  23          // Includes
+  24          //--------------------------------------------------------------------------------------------------------
+             ----
+  25          #include "c8051F020.h"
+  26          
+  27          #include "CMD_Servomoteur.h"
+  28          #include "Declarations_GPIO_BSE.h"
+  29          #include <stdio.h>
+  30          #include <math.h>
+  31          
+  32          extern unsigned char T3_5ms;
+  33          
+  34          
+  35          //--------------------------------------------------------------------------------------------------------
+             ----
+  36          // Variables globales
+  37          //--------------------------------------------------------------------------------------------------------
+             ----
+  38           // Angle du servomoteur avant deplacement
+  39          char Angle_actuel_H=0;
+  40          char Angle_actuel_V=0;
+  41          
+  42          void Config_PCA0(void)
+  43          {
+  44   1          long int Temps_angle;
+  45   1          // Choix de l'horloge - SYSCLK pour un cycle de 11,852 ms
+  46   1          PCA0MD |= 0x02;  
+  47   1          PCA0MD &= ~0x0C;
+  48   1          
+  49   1        
+  50   1          // Mode PWM 16-bit
+C51 COMPILER V9.52.0.0   CMD_SERVOMOTEUR                                                   05/18/2017 17:38:56 PAGE 2   
+
+  51   1          PCA0CPM0=0xC2;
+  52   1          PCA0CPM1=0xC2;
+  53   1        
+  54   1        
+  55   1          // Rapport cyclique
+  56   1          Temps_angle=1500;
+  57   1          PCA0CPH0 = ((100-(Temps_angle*100))/11851)*65536/100>>8; // Sortie sur port 1.0
+  58   1          PCA0CPH1 = ((100-(Temps_angle*100))/11851)*65536/100>>8; // Sortie sur port 1.1
+  59   1      
+  60   1          // Lance le comptage du PCA0
+  61   1          PCA0CN |= 0x40;
+  62   1      }
+  63          
+  64          
+  65          unsigned char CMD_Servo_H (char Angle) //pour l’axe horizontal 
+  66          {
+  67   1        long int Temps_angle, Temps_Estime;
+  68   1        
+  69   1        Temps_angle=600+(Angle+90)*10; // Temps en µs - Temps min : 600 µs - Temps max : 2400 µs
+  70   1        
+  71   1        // Calcul de la valeur de rechargement pour le PWM
+  72   1        // Duty_cycle=Temps_angle/11851 avec 11851 le temps en ms d'une période
+  73   1        // On multiplie par 100 pour le domaine du rapport cyclique
+  74   1        // On multiplie par 65536 pour passer dans la base 16-bits
+  75   1        // On divise par 100 pour avoir une valeur fidèle
+  76   1        PCA0CPH1 = ((100-(Temps_angle*100))/11851)*65536/100>>8;
+  77   1      //  PCA0CPH1 = -(65536/11851)*temps_angle*1000>>8;
+  78   1        
+  79   1        // Calcul du temps estimé pour faire la rotation
+  80   1        Temps_Estime=abs(Angle_actuel_H-Angle)*21/60; // cf datasheet 
+  81   1        
+  82   1        // Redéfinition de l'angle actuel
+  83   1        Angle_actuel_H=Angle;
+  84   1        
+  85   1        return Temps_Estime;
+  86   1      }
+  87          
+  88          
+  89          unsigned char CMD_Servo_V (char Angle) //pour l’axe horizontal 
+  90          {
+  91   1        long int Temps_angle, Temps_Estime;
+  92   1        
+  93   1        Temps_angle=600+(Angle+90)*10; // Temps en µs - Temps min : 600 µs - Temps max : 2400 µs
+  94   1        
+  95   1        // Calcul de la valeur de rechargement pour le PWM
+  96   1        // Duty_cycle=Temps_angle/11851 avec 11851 le temps en ms d'une période
+  97   1        // On multiplie par 100 pour le domaine du rapport cyclique
+  98   1        // On multiplie par 65536 pour passer dans la base 16-bits
+  99   1        // On divise par 100 pour avoir une valeur fidèle
+ 100   1        //PCA0CPH0 = ((100-(Temps_angle*100))/11851)*65536/100>>8;
+ 101   1      //  PCA0CPH1 = -(65536/11851)*temps_angle*1000>>8;
+ 102   1        
+ 103   1        // Calcul du temps estimé pour faire la rotation
+ 104   1        Temps_Estime=abs(Angle_actuel_H-Angle)*21/60; // cf datasheet 
+ 105   1        
+ 106   1        // Redéfinition de l'angle actuel
+ 107   1        Angle_actuel_V=Angle;
+ 108   1        
+ 109   1        return Temps_Estime;
+ 110   1      }
+ 111          
+ 112          void tempo_servo(unsigned char temps)
+C51 COMPILER V9.52.0.0   CMD_SERVOMOTEUR                                                   05/18/2017 17:38:56 PAGE 3   
+
+ 113          {
+ 114   1          char c1=0xBE, c2 = 0xBD;
+ 115   1          TMR3CN |= 0x04; // On lance le Timer 3
+ 116   1          while(T3_5ms<=temps*150/5);
+ 117   1          TMR3CN &= 0xFB; // On arrete le Timer 3
+ 118   1          T3_5ms=0;
+ 119   1      }
+ 120          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    415    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2      24
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
